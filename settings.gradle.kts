@@ -12,5 +12,6 @@ plugins {
 
 // Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
 include(":webapp")
+include(":dto")
 
 rootProject.name = "mafia-companion-api"
