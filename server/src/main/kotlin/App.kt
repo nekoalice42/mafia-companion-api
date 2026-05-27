@@ -1,19 +1,15 @@
 package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
-import io.ktor.openapi.OpenApiDoc
-import io.ktor.openapi.OpenApiInfo
-import io.ktor.openapi.Server
+import io.ktor.openapi.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.routing.openapi.describe
-import io.ktor.server.routing.openapi.hide
-import io.ktor.server.routing.openapi.plus
-import io.ktor.utils.io.ExperimentalKtorApi
+import io.ktor.server.routing.openapi.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.toList
