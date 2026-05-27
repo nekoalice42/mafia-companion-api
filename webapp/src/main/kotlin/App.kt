@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.flow.Flow
@@ -176,6 +177,12 @@ fun Application.module() {
         json(jsonConfig)
     }
 //    install(Resources)
+    install(CORS) {
+        anyHost()
+        anyMethod()
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+    }
     routing {
         get("/") {
             call.respond(mapOf("message" to "Hello, World!"))
