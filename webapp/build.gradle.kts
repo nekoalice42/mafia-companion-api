@@ -25,3 +25,11 @@ dependencies {
 application {
     mainClass = "io.ktor.server.netty.EngineMain"
 }
+
+ktor {
+    openApi {
+        enabled = true
+        codeInferenceEnabled = true
+        onlyCommented = false
+    }
+}

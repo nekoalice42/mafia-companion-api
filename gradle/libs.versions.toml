@@ -21,6 +21,7 @@ ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-resources = { module = "io.ktor:ktor-server-resources", version.ref = "ktor" }
+ktor-server-routing-openapi = { module = "io.ktor:ktor-server-routing-openapi", version.ref = "ktor" }
 ktor-server-statusPages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
@@ -34,9 +35,10 @@ server-ktor-server = [
 server-ktor-server-plugins = [
     "ktor-serialization-kotlinx-json",
     "ktor-server-contentNegotiation",
-    "ktor-server-resources",
-    "ktor-server-statusPages",
     "ktor-server-cors",
+    "ktor-server-resources",
+    "ktor-server-routing-openapi",
+    "ktor-server-statusPages",
 ]
 server-ktor-test-plugins = [
     "ktor-client-contentNegotiation",

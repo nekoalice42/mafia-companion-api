@@ -1,12 +1,16 @@
 package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
+import io.ktor.openapi.OpenApiDoc
+import io.ktor.openapi.OpenApiInfo
+import io.ktor.openapi.Server
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.plus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.toList
@@ -167,13 +171,18 @@ fun calculateScoreboard(games: Iterable<NewGameBody>): List<ScoreboardRowRolling
     return playerCounters.values.toList()
 }
 
+private val jsonConfig = Json(DefaultJson) {
+    prettyPrint = true
+}
+
+private val openapiJsonConfig = Json(jsonConfig) {
+    encodeDefaults = false
+}
+
 fun Application.module() {
     val gameStorage = InMemoryGameStorage()
     val playerStorage = InMemoryPlayerStorage()
     install(ContentNegotiation) {
-        val jsonConfig = Json(DefaultJson) {
-            prettyPrint = true
-        }
         json(jsonConfig)
     }
 //    install(Resources)
@@ -234,6 +243,32 @@ fun Application.module() {
             }
             gameStorage.create(newGame)
             call.respond(HttpStatusCode.Created)
+        }
+
+        get("/openapi.json") {
+            val doc = OpenApiDoc(
+                info = OpenApiInfo(
+                    title = "mafia-companion-api",
+                    version = "0.1.0-alpha.0",
+                    license = OpenApiInfo.License(
+                        name = "AGPLv3",
+                        url = "https://www.gnu.org/licenses/agpl-3.0.html",
+                        identifier = "AGPL-3.0",
+                    ),
+                ),
+                servers = listOf(
+                    Server(
+                        url = "http://localhost:8080",
+                        description = "Development server",
+                    ),
+                    Server(
+                        url = "https://api.mafia.nekoalice.me",
+                        description = "Production server",
+                    )
+                ),
+            ) + call.application.routingRoot.descendants()
+            val encodedDoc = openapiJsonConfig.encodeToString(doc)
+            call.respondText(encodedDoc, ContentType.Application.Json)
         }
 
         get("/apiSamples/newGameBody/randomUnvalidated") {
