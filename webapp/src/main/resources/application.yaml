@@ -1,6 +1,6 @@
 ktor:
   application:
     modules:
-      - me.nekoalice.mafia.api.AppKt.module
+      - me.nekoalice.mafia.api.server.AppKt.module
   deployment:
     port: 8080
