@@ -24,8 +24,6 @@ import kotlin.time.Duration.Companion.hours
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-private fun emptyPlayCount() = Role.entries.associateWith { 0 }.toMutableMap()
-
 private val Double.roundedToNearestInt: Int
     get() = when {
         !isFinite() -> throw IllegalArgumentException("Invalid input: $this")
@@ -42,8 +40,8 @@ private infix fun Int.roundDiv(other: Int) = when {
 class ScoreboardRowRollingCounter(
     val playerId: PlayerId,
 ) {
-    private val playCount: MutableMap<Role, Int> = emptyPlayCount()
-    private val winCount: MutableMap<Role, Int> = emptyPlayCount()
+    private val playCount = RoleCounter()
+    private val winCount = RoleCounter()
     private var gamePointsX100: Int = 0
     private var bestTurnPointsX100: Int = 0
     private var ciPointsX100: Int = 0
@@ -62,10 +60,10 @@ class ScoreboardRowRollingCounter(
             "Guessed mafia count cannot be non-zero if not killed first night"
         }
         gamePointsX100 += extraPointsX100
-        playCount[playerRole] = playCount[playerRole]!! + 1
+        playCount[playerRole] = playCount[playerRole] + 1
         totalPlayCount++
         if (winnerTeam == playerRole.team) {
-            winCount[playerRole] = winCount[playerRole]!! + 1
+            winCount[playerRole] = winCount[playerRole] + 1
             gamePointsX100 += 100
         }
         if (wasKilledFirstNight) {
@@ -207,8 +205,8 @@ fun Application.module() {
                 }
                 .sortedWith(
                     compareByDescending<ScoreboardRow> { it.totalPointsX100 }
-                        .thenByDescending { it.playCount.values.sum() }
-                        .thenByDescending { it.winCount.values.sum() }
+                        .thenByDescending { it.playCount.total }
+                        .thenByDescending { it.winCount.total }
                         .thenBy { it.player.nickname }
                 )
             call.respond(ResponseList(scoreboardSorted))

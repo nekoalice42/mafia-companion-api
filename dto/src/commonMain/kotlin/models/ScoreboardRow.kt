@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 public data class ScoreboardRow(
     val player: Player,
-    val playCount: Map<Role, Int>,
-    val winCount: Map<Role, Int>,
+    val playCount: RoleCounter,
+    val winCount: RoleCounter,
     val gamePointsX100: Int,
     val ciPointsX100: Int,
     val bestTurnPointsX100: Int,
