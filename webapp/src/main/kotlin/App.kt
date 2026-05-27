@@ -10,7 +10,10 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.describe
+import io.ktor.server.routing.openapi.hide
 import io.ktor.server.routing.openapi.plus
+import io.ktor.utils.io.ExperimentalKtorApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.toList
@@ -216,6 +219,11 @@ fun Application.module() {
             call.respond(ResponseList(playerStorage.getAll().toList()))
         }
 
+        /**
+         * Create a new player
+         *
+         * Body: application/json [me.nekoalice.mafia.api.dto.models.Player]
+         */
         post<Player>("/player") { newPlayer ->
             val existingPlayer = playerStorage.getByIdOrNull(newPlayer.id)
             if (existingPlayer != null) {
@@ -227,6 +235,11 @@ fun Application.module() {
             call.respond(HttpStatusCode.Created)
         }
 
+        /**
+         * Create a new game
+         *
+         * Body: application/json [me.nekoalice.mafia.api.dto.models.NewGameBody]
+         */
         post<NewGameBody>("/game") { newGame ->
             val validationResult = newGame.validate()
             if (validationResult.isFailure) {
@@ -243,6 +256,7 @@ fun Application.module() {
             call.respond(HttpStatusCode.Created)
         }
 
+        @OptIn(ExperimentalKtorApi::class)
         get("/openapi.json") {
             val doc = OpenApiDoc(
                 info = OpenApiInfo(
@@ -267,7 +281,7 @@ fun Application.module() {
             ) + call.application.routingRoot.descendants()
             val encodedDoc = openapiJsonConfig.encodeToString(doc)
             call.respondText(encodedDoc, ContentType.Application.Json)
-        }
+        }.hide()
 
         get("/apiSamples/newGameBody/randomUnvalidated") {
             call.respond(
