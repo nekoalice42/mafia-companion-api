@@ -27,6 +27,23 @@ ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref 
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 [bundles]
+apiContract-projectDependencies = [
+    "ktor-server-routing-openapi",
+    "kotlinx-serialization-json",
+]
+apiContract-projectDependencies-test = [
+    "kotlin-test",
+]
+apiContract-peerDependencies = [
+    "kotlinx-datetime",
+]
+dto-projectDependencies = [
+    "kotlinx-datetime",
+    "kotlinx-serialization-json",
+]
+dto-projectDependencies-test = [
+    "kotlin-test",
+]
 server-ktor-server = [
     "ktor-server-core",
     "ktor-server-netty",
@@ -52,13 +69,6 @@ server-peerDependencies = [
 ]
 server-projectDependencies-test = [
     "kotlin-test-junit",
-]
-dto-projectDependencies = [
-    "kotlinx-datetime",
-    "kotlinx-serialization-json",
-]
-dto-projectDependencies-test = [
-    "kotlin-test",
 ]
 
 [plugins]
