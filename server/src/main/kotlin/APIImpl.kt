@@ -32,10 +32,10 @@ class APIImpl(
         val existingPlayer = playerStorage.getByIdOrNull(player.id)
         if (existingPlayer != null) {
             playerStorage.edit(player.id, player)
-            return Response.Success(statusCode = HttpStatusCode.NoContent)
+            return Response.Success(HttpStatusCode.NoContent)
         }
         playerStorage.add(player)
-        return Response.Success(statusCode = HttpStatusCode.Created)
+        return Response.Success(HttpStatusCode.Created)
     }
 
     override suspend fun createGame(body: NewGameBody): Response<Unit> {
@@ -45,7 +45,7 @@ class APIImpl(
             return Response.Error(e, HttpStatusCode.UnprocessableEntity)
         }
         gameStorage.create(body)
-        return Response.Success(statusCode = HttpStatusCode.Created)
+        return Response.Success(HttpStatusCode.Created)
     }
 
     override suspend fun getScoreboard(): Response<ResponseList<ScoreboardRow>> {

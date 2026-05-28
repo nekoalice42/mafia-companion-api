@@ -2,6 +2,7 @@ package me.nekoalice.mafia.api.contracts
 
 import io.ktor.http.*
 import io.ktor.openapi.*
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.openapi.*
@@ -9,6 +10,9 @@ import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.dto.models.*
+
+private suspend fun ApplicationCall.respond(response: BaseAPI.Response<*>) =
+    response.sendInResponseTo(this)
 
 public abstract class BaseAPI(
     private val info: APIInfo,
@@ -55,13 +59,11 @@ public abstract class BaseAPI(
         } // TODO: `.describe {}`
 
         post<Player>("/player") { newPlayer ->
-            postPlayer(newPlayer)
-            call.respond(HttpStatusCode.NoContent)
+            call.respond(postPlayer(newPlayer))
         } // TODO: `.describe {}`
 
         post<NewGameBody>("/game") { newGame ->
-            createGame(newGame)
-            call.respond(HttpStatusCode.NoContent)
+            call.respond(createGame(newGame))
         } // TODO: `.describe {}`
 
         get("/scoreboard") {
@@ -69,28 +71,32 @@ public abstract class BaseAPI(
         } // TODO: `.describe {}`
     }
 
-    public sealed interface Response<SuccessT> {
-        public data class Success<T>(
-            val response: T? = null,
+    public sealed interface Response<SuccessT : Any> {
+        public data class Success<T : Any>(
+            val response: T?,
             val statusCode: HttpStatusCode = HttpStatusCode.OK,
-            private val typeInfo: TypeInfo? = null,
+            private val typeInfo: TypeInfo?,
         ) : Response<T> {
+            public constructor(
+                statusCode: HttpStatusCode = HttpStatusCode.OK
+            ) : this(null, statusCode, null)
+
             init {
                 require(
                     response != null && typeInfo != null
                             || response == null && typeInfo == null
-                ) { "Response and typeInfo must be both null or both non-null" }
+                ) { "Response=${response} and typeInfo=${typeInfo} must be both null or both non-null" }
             }
 
             private val isEmptyResponse = response == null
 
-            override suspend fun unwrap(context: RoutingContext): Unit = if (isEmptyResponse)
-                context.call.respond(statusCode)
+            override suspend fun sendInResponseTo(call: ApplicationCall): Unit = if (isEmptyResponse)
+                call.respond(statusCode)
             else
-                context.call.respond(statusCode, response!!, typeInfo!!)
+                call.respond(statusCode, response!!, typeInfo!!)
         }
 
-        public data class Error<Unused>(
+        public data class Error<Unused : Any>(
             val message: String,
             val statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
         ) : Response<Unused> {
@@ -99,14 +105,14 @@ public abstract class BaseAPI(
                 statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
             ) : this(exception.message ?: "Unknown error", statusCode)
 
-            override suspend fun unwrap(context: RoutingContext): Unit =
-                context.call.respond(statusCode, ErrorResponse(message))
+            override suspend fun sendInResponseTo(call: ApplicationCall): Unit =
+                call.respond(statusCode, ErrorResponse(message))
         }
 
-        public suspend fun unwrap(context: RoutingContext)
+        public suspend fun sendInResponseTo(call: ApplicationCall)
 
         public companion object {
-            public inline fun <reified T> Success(
+            public inline fun <reified T : Any> Success(
                 response: T,
                 statusCode: HttpStatusCode = HttpStatusCode.OK,
             ): Success<T> = Success(response, statusCode, typeInfo<T>())
