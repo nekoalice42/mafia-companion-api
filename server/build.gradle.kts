@@ -11,6 +11,7 @@ group = "me.nekoalice.mafia.api"
 version = "0.1.0"
 
 dependencies {
+    implementation(project(":apiContract"))
     implementation(project(":dto"))
 
     implementation(libs.bundles.server.ktor.server)
