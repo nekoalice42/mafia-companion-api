@@ -38,13 +38,13 @@ class APIImpl(
         return Response.Success(HttpStatusCode.Created)
     }
 
-    override suspend fun createGame(body: NewGameBody): Response<Unit> {
+    override suspend fun createGame(game: NewGameBody): Response<Unit> {
         try {
-            body.validate()
+            game.validate()
         } catch (e: IllegalArgumentException) {
             return Response.Error(e, HttpStatusCode.UnprocessableEntity)
         }
-        gameStorage.create(body)
+        gameStorage.create(game)
         return Response.Success(HttpStatusCode.Created)
     }
 
