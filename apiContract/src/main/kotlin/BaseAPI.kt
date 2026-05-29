@@ -19,7 +19,7 @@ public abstract class BaseAPI(
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
-    public abstract suspend fun postPlayer(player: Player): Response<Unit>
+    public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
     public abstract suspend fun createGame(body: NewGameBody): Response<Unit>
     public abstract suspend fun getScoreboard(): Response<ResponseList<ScoreboardRow>>
 
@@ -58,8 +58,8 @@ public abstract class BaseAPI(
             call.respond(getPlayers())
         } // TODO: `.describe {}`
 
-        post<Player>("/player") { newPlayer ->
-            call.respond(postPlayer(newPlayer))
+        put<Player>("/player") { newPlayer ->
+            call.respond(upsertPlayer(newPlayer))
         } // TODO: `.describe {}`
 
         post<NewGameBody>("/game") { newGame ->

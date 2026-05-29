@@ -28,7 +28,7 @@ class APIImpl(
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
         Response.Success(ResponseList(playerStorage.getAll().toList()))
 
-    override suspend fun postPlayer(player: Player): Response<Unit> {
+    override suspend fun upsertPlayer(player: Player): Response<Unit> {
         val existingPlayer = playerStorage.getByIdOrNull(player.id)
         if (existingPlayer != null) {
             playerStorage.edit(player.id, player)
