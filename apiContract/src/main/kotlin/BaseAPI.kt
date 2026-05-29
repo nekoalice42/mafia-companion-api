@@ -71,6 +71,17 @@ public abstract class BaseAPI(
         } // TODO: `.describe {}`
     }
 
+    public val requiredMethods: List<HttpMethod> = listOf(
+        HttpMethod.Get,
+        HttpMethod.Post,
+        HttpMethod.Put,
+    )
+
+    public val requiredHeaders: List<String> = listOf(
+        HttpHeaders.Accept,
+        HttpHeaders.ContentType,
+    )
+
     public sealed interface Response<SuccessT : Any> {
         public data class Success<T : Any>(
             val response: T?,

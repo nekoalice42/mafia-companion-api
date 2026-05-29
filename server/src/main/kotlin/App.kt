@@ -26,9 +26,8 @@ fun Application.module() {
 //    install(Resources)
     install(CORS) {
         anyHost()
-        anyMethod()
-        allowHeader(HttpHeaders.Authorization)
-        allowHeader(HttpHeaders.ContentType)
+        api.requiredHeaders.forEach { allowHeader(it) }
+        api.requiredMethods.forEach { allowMethod(it) }
     }
     routing {
         api.applyTo(this)
