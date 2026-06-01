@@ -8,6 +8,7 @@ import kotlin.time.Clock
 
 @Serializable
 public data class NewGameBody(
+    val tournament: TournamentId,
     val players: List<InGamePlayer>,
     val winnerTeam: Team,
     val startTime: LocalDateTime,

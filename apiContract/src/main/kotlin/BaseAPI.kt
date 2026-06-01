@@ -20,8 +20,13 @@ public abstract class BaseAPI(
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
     public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
+    public abstract suspend fun getTournaments(): Response<ResponseList<Tournament>>
+    public abstract suspend fun getTournament(id: TournamentId): Response<Tournament>
+    public abstract suspend fun upsertTournament(tournament: Tournament): Response<Unit>
     public abstract suspend fun createGame(game: NewGameBody): Response<Unit>
-    public abstract suspend fun getScoreboard(): Response<ResponseList<ScoreboardRow>>
+    public abstract suspend fun getScoreboard(
+        tournamentId: TournamentId,
+    ): Response<ResponseList<ScoreboardRow>>
 
     @OptIn(ExperimentalKtorApi::class)
     public fun applyTo(routing: Routing): Unit = with(routing) {
@@ -62,12 +67,26 @@ public abstract class BaseAPI(
             call.respond(upsertPlayer(it))
         } // TODO: `.describe {}`
 
+        get("/tournament") {
+            call.respond(getTournaments())
+        } // TODO: `.describe {}`
+
+        get("/tournament/{tournament_id}") {
+            val id = TournamentId(call.pathParameters["tournament_id"]!!)
+            call.respond(getTournament(id))
+        }
+
+        put<Tournament>("/tournament") {
+            call.respond(upsertTournament(it))
+        } // TODO: `.describe {}`
+
         post<NewGameBody>("/game") {
             call.respond(createGame(it))
         } // TODO: `.describe {}`
 
-        get("/scoreboard") {
-            call.respond(getScoreboard())
+        get("/tournament/{tournament_id}/scoreboard") {
+            val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
+            call.respond(getScoreboard(tournamentId))
         } // TODO: `.describe {}`
     }
 
