@@ -44,6 +44,11 @@ class APIImpl(
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
         Response.Success(ResponseList(playerStorage.getAll().toList()))
 
+    override suspend fun getPlayer(playerId: PlayerId): Response<Player> =
+        playerStorage.getByIdOrNull(playerId)?.let {
+            Response.Success(it)
+        } ?: Response.Error("Player not found", HttpStatusCode.NotFound)
+
     override suspend fun upsertPlayer(player: Player): Response<Unit> =
         upsert(playerStorage, player, player.id)
 

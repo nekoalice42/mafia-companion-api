@@ -19,7 +19,7 @@ public abstract class BaseAPI(
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
-    //public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
+    public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
     public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
     public abstract suspend fun deletePlayer(playerId: PlayerId): Response<Unit>
     public abstract suspend fun getTournaments(): Response<ResponseList<Tournament>>
@@ -69,6 +69,11 @@ public abstract class BaseAPI(
         put<Player>("/player") {
             call.respond(upsertPlayer(it))
         } // TODO: `.describe {}`
+
+        get("/player/{player_id}") {
+            val playerId = PlayerId(call.pathParameters["player_id"]!!)
+            call.respond(getPlayer(playerId))
+        }
 
         delete("/player/{player_id}") {
             val playerId = PlayerId(call.pathParameters["player_id"]!!)
