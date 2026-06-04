@@ -9,15 +9,15 @@ import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
 class InMemoryTournamentStorage : TournamentStorage {
     private val tournaments = mutableMapOf<TournamentId, Tournament>()
 
-    override suspend fun add(tournament: Tournament) {
-        tournaments[tournament.id] = tournament
-    }
-
-    override suspend fun edit(id: TournamentId, tournament: Tournament) {
-        tournaments[id] = tournament
+    override suspend fun editOrAdd(id: TournamentId, item: Tournament) {
+        tournaments[id] = item
     }
 
     override suspend fun getByIdOrNull(id: TournamentId): Tournament? = tournaments[id]
 
     override fun getAll(): Flow<Tournament> = tournaments.values.asFlow()
+
+    override suspend fun delete(id: TournamentId) {
+        tournaments.remove(id)
+    }
 }

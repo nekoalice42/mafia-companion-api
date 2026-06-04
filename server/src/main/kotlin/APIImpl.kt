@@ -6,6 +6,7 @@ import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.validation.validate
 import me.nekoalice.mafia.api.dto.models.*
+import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
 import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
 import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
@@ -24,20 +25,31 @@ class APIImpl(
         productionUrl = "https://api.mafia.nekoalice.me",
     )
 ) {
+    private suspend fun <StorageT : CRUDStorage<ItemT, IdT>, ItemT, IdT> upsert(
+        storage: StorageT,
+        item: ItemT,
+        id: IdT,
+    ): Response<Unit> {
+        val existed = storage.getByIdOrNull(id) != null
+        storage.editOrAdd(id, item)
+        return when (existed) {
+            true -> Response.Success(HttpStatusCode.NoContent)
+            false -> Response.Success(HttpStatusCode.Created)
+        }
+    }
+
     override suspend fun getRoot(): Response<HelloResponse> =
         Response.Success(HelloResponse())
 
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
         Response.Success(ResponseList(playerStorage.getAll().toList()))
 
-    override suspend fun upsertPlayer(player: Player): Response<Unit> {
-        val existingPlayer = playerStorage.getByIdOrNull(player.id)
-        if (existingPlayer != null) {
-            playerStorage.edit(player.id, player)
-            return Response.Success(HttpStatusCode.NoContent)
-        }
-        playerStorage.add(player)
-        return Response.Success(HttpStatusCode.Created)
+    override suspend fun upsertPlayer(player: Player): Response<Unit> =
+        upsert(playerStorage, player, player.id)
+
+    override suspend fun deletePlayer(playerId: PlayerId): Response<Unit> {
+        playerStorage.delete(playerId)
+        return Response.Success(HttpStatusCode.NoContent)
     }
 
     override suspend fun getTournaments(): Response<ResponseList<Tournament>> {
@@ -49,14 +61,12 @@ class APIImpl(
             Response.Success(it)
         } ?: Response.Error("Tournament not found", HttpStatusCode.NotFound)
 
-    override suspend fun upsertTournament(tournament: Tournament): Response<Unit> {
-        val existingTournament = tournamentStorage.getByIdOrNull(tournament.id)
-        if (existingTournament != null) {
-            tournamentStorage.edit(tournament.id, tournament)
-            return Response.Success(HttpStatusCode.NoContent)
-        }
-        tournamentStorage.add(tournament)
-        return Response.Success(HttpStatusCode.Created)
+    override suspend fun upsertTournament(tournament: Tournament): Response<Unit> =
+        upsert(tournamentStorage, tournament, tournament.id)
+
+    override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
+        tournamentStorage.delete(tournamentId)
+        return Response.Success(HttpStatusCode.NoContent)
     }
 
     override suspend fun createGame(game: NewGameBody): Response<Unit> {

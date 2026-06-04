@@ -19,10 +19,13 @@ public abstract class BaseAPI(
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
+    //public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
     public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
+    public abstract suspend fun deletePlayer(playerId: PlayerId): Response<Unit>
     public abstract suspend fun getTournaments(): Response<ResponseList<Tournament>>
     public abstract suspend fun getTournament(id: TournamentId): Response<Tournament>
     public abstract suspend fun upsertTournament(tournament: Tournament): Response<Unit>
+    public abstract suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit>
     public abstract suspend fun createGame(game: NewGameBody): Response<Unit>
     public abstract suspend fun getScoreboard(
         tournamentId: TournamentId,
@@ -67,6 +70,11 @@ public abstract class BaseAPI(
             call.respond(upsertPlayer(it))
         } // TODO: `.describe {}`
 
+        delete("/player/{player_id}") {
+            val playerId = PlayerId(call.pathParameters["player_id"]!!)
+            call.respond(deletePlayer(playerId))
+        } // TODO: `.describe {}`
+
         get("/tournament") {
             call.respond(getTournaments())
         } // TODO: `.describe {}`
@@ -74,10 +82,15 @@ public abstract class BaseAPI(
         get("/tournament/{tournament_id}") {
             val id = TournamentId(call.pathParameters["tournament_id"]!!)
             call.respond(getTournament(id))
-        }
+        } // TODO: `.describe {}`
 
         put<Tournament>("/tournament") {
             call.respond(upsertTournament(it))
+        } // TODO: `.describe {}`
+
+        delete("/tournament/{tournament_id}") {
+            val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
+            call.respond(deleteTournament(tournamentId))
         } // TODO: `.describe {}`
 
         post<NewGameBody>("/game") {
@@ -94,6 +107,7 @@ public abstract class BaseAPI(
         HttpMethod.Get,
         HttpMethod.Post,
         HttpMethod.Put,
+        HttpMethod.Delete,
     )
 
     public val requiredHeaders: List<String> = listOf(

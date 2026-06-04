@@ -9,15 +9,15 @@ import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
 class InMemoryPlayerStorage : PlayerStorage {
     private val players = mutableMapOf<PlayerId, Player>()
 
-    override suspend fun add(player: Player) {
-        players[player.id] = player
-    }
-
-    override suspend fun edit(id: PlayerId, player: Player) {
-        players[id] = player
+    override suspend fun editOrAdd(id: PlayerId, item: Player) {
+        players[id] = item
     }
 
     override suspend fun getByIdOrNull(id: PlayerId): Player? = players[id]
 
     override fun getAll(): Flow<Player> = players.values.asFlow()
+
+    override suspend fun delete(id: PlayerId) {
+        players.remove(id)
+    }
 }
