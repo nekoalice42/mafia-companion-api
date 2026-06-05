@@ -2,7 +2,14 @@ package me.nekoalice.mafia.api.dto.models
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
-@Serializable
 @JvmInline
-public value class PlayerId(public val value: String)
+@OptIn(ExperimentalUuidApi::class)
+@Serializable
+public value class PlayerId(public val value: Uuid) {
+    public constructor(value: String) : this(Uuid.parse(value))
+
+    override fun toString(): String = value.toString()
+}
