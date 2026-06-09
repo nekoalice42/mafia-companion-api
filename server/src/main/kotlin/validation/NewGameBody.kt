@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.contracts.validation
+package me.nekoalice.mafia.api.server.validation
 
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -7,7 +7,7 @@ import me.nekoalice.mafia.api.dto.models.PlayerId
 import me.nekoalice.mafia.api.dto.models.Role
 import kotlin.time.Clock
 
-public fun NewGameBody.validate() {
+fun NewGameBody.validate() {
     require(players.size == 10) { "players != 10" }
     require(
         startTime < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())

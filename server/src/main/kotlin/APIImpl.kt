@@ -4,13 +4,13 @@ import io.ktor.http.*
 import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
-import me.nekoalice.mafia.api.contracts.validation.validate
 import me.nekoalice.mafia.api.dto.models.*
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
 import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
 import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
 import me.nekoalice.mafia.api.server.utils.calculateScoreboard
+import me.nekoalice.mafia.api.server.validation.validate
 
 class APIImpl(
     val tournamentStorage: TournamentStorage,
