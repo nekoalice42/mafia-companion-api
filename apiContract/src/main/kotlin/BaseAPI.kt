@@ -2,7 +2,7 @@ package me.nekoalice.mafia.api.contracts
 
 import io.ktor.http.*
 import io.ktor.openapi.*
-import io.ktor.server.application.ApplicationCall
+import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.openapi.*
@@ -10,9 +10,6 @@ import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.dto.models.*
-
-private suspend fun ApplicationCall.respond(response: BaseAPI.Response<*>) =
-    response.sendInResponseTo(this)
 
 public abstract class BaseAPI(
     private val info: APIInfo,
@@ -60,52 +57,216 @@ public abstract class BaseAPI(
 
         get("/") {
             call.respond(getRoot())
-        } // TODO: `.describe {}`
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<HelloResponse>()
+                    }
+                    description = "Health check (greeting)"
+                }
+            }
+        }
 
         get("/player") {
             call.respond(getPlayers())
-        } // TODO: `.describe {}`
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<ResponseList<Player>>()
+                    }
+                    description = "List of players"
+                }
+            }
+        }
 
         put<Player>("/player") {
             call.respond(upsertPlayer(it))
-        } // TODO: `.describe {}`
+        }.describe {
+            requestBody {
+                required = true
+                content {
+                    schema = jsonSchema<Player>()
+                }
+                description = "Player details to upsert"
+            }
+            responses {
+                commonPutResponses("Player")
+                commonKtorBodyErrorResponses("Player")
+            }
+        }
 
         get("/player/{player_id}") {
             val playerId = PlayerId(call.pathParameters["player_id"]!!)
             call.respond(getPlayer(playerId))
+        }.describe {
+            parameters {
+                path("player_id") {
+                    required = true
+                    description = "Player ID to retrieve"
+                    schema = jsonSchema<PlayerId>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<Player>()
+                    }
+                    description = "Player details"
+                }
+                HttpStatusCode.NotFound {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Player not found"
+                }
+            }
         }
 
         delete("/player/{player_id}") {
             val playerId = PlayerId(call.pathParameters["player_id"]!!)
             call.respond(deletePlayer(playerId))
-        } // TODO: `.describe {}`
+        }.describe {
+            parameters {
+                path("player_id") {
+                    required = true
+                    description = "Player ID to delete"
+                    schema = jsonSchema<PlayerId>()
+                }
+            }
+            responses {
+                commonDeleteResponses("Player")
+            }
+        }
 
         get("/tournament") {
             call.respond(getTournaments())
-        } // TODO: `.describe {}`
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<ResponseList<Tournament>>()
+                    }
+                    description = "List of tournaments"
+                }
+            }
+        }
 
         get("/tournament/{tournament_id}") {
             val id = TournamentId(call.pathParameters["tournament_id"]!!)
             call.respond(getTournament(id))
-        } // TODO: `.describe {}`
+        }.describe {
+            parameters {
+                path("tournament_id") {
+                    required = true
+                    description = "Tournament ID to retrieve"
+                    schema = jsonSchema<TournamentId>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<Tournament>()
+                    }
+                    description = "Tournament details"
+                }
+                HttpStatusCode.NotFound {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Tournament not found"
+                }
+            }
+        }
 
         put<Tournament>("/tournament") {
             call.respond(upsertTournament(it))
-        } // TODO: `.describe {}`
+        }.describe {
+            requestBody {
+                required = true
+                content {
+                    schema = jsonSchema<Tournament>()
+                }
+                description = "Tournament details to upsert"
+            }
+            responses {
+                commonPutResponses("Tournament")
+                commonKtorBodyErrorResponses("Tournament")
+            }
+        }
 
         delete("/tournament/{tournament_id}") {
             val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
             call.respond(deleteTournament(tournamentId))
-        } // TODO: `.describe {}`
+        }.describe {
+            parameters {
+                path("tournament_id") {
+                    required = true
+                    description = "Tournament ID to delete"
+                    schema = jsonSchema<TournamentId>()
+                }
+            }
+            responses {
+                commonDeleteResponses("Tournament")
+            }
+        }
 
         post<NewGameBody>("/game") {
             call.respond(createGame(it))
-        } // TODO: `.describe {}`
+        }.describe {
+            requestBody {
+                required = true
+                content {
+                    schema = jsonSchema<NewGameBody>()
+                }
+                description = "Game details to create"
+            }
+            responses {
+                HttpStatusCode.Created {
+                    description = "Game created successfully"
+                }
+                HttpStatusCode.NotFound {
+                    description = "Tournament not found"
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                }
+                HttpStatusCode.UnprocessableEntity {
+                    description = "Error validating the game"
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                }
+                commonKtorBodyErrorResponses("NewGameBody")
+            }
+        }
 
         get("/tournament/{tournament_id}/scoreboard") {
             val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
             call.respond(getScoreboard(tournamentId))
-        } // TODO: `.describe {}`
+        }.describe {
+            parameters {
+                path("tournament_id") {
+                    description = "Tournament ID to retrieve scoreboard for"
+                    schema = jsonSchema<TournamentId>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    description = "Tournament scoreboard"
+                    content {
+                        schema = jsonSchema<ResponseList<ScoreboardRow>>()
+                    }
+                }
+                HttpStatusCode.NotFound {
+                    description = "Tournament not found"
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                }
+            }
+        }
     }
 
     public val requiredMethods: List<HttpMethod> = listOf(
@@ -139,10 +300,11 @@ public abstract class BaseAPI(
 
             private val isEmptyResponse = response == null
 
-            override suspend fun sendInResponseTo(call: ApplicationCall): Unit = if (isEmptyResponse)
-                call.respond(statusCode)
-            else
-                call.respond(statusCode, response!!, typeInfo!!)
+            override suspend fun sendInResponseTo(call: ApplicationCall): Unit =
+                if (isEmptyResponse)
+                    call.respond(statusCode)
+                else
+                    call.respond(statusCode, response!!, typeInfo!!)
         }
 
         public data class Error<Unused : Any>(
@@ -172,5 +334,32 @@ public abstract class BaseAPI(
         private val openapiJsonConfig = Json {
             encodeDefaults = false
         }
+    }
+}
+
+private suspend fun ApplicationCall.respond(response: BaseAPI.Response<*>) =
+    response.sendInResponseTo(this)
+
+private fun Responses.Builder.commonPutResponses(what: String) {
+    HttpStatusCode.Created {
+        description = "$what created"
+    }
+    HttpStatusCode.NoContent {
+        description = "$what updated"
+    }
+}
+
+private fun Responses.Builder.commonDeleteResponses(what: String) {
+    HttpStatusCode.NoContent {
+        description = "$what deleted or didn't exist before"
+    }
+}
+
+private fun Responses.Builder.commonKtorBodyErrorResponses(what: String) {
+    HttpStatusCode.BadRequest {
+        description = "Request body could not be converted to $what"
+    }
+    HttpStatusCode.UnsupportedMediaType {
+        description = "Request body content type is unsupported"
     }
 }
