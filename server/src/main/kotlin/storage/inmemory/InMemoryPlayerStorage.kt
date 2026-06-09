@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.server.storage
+package me.nekoalice.mafia.api.server.storage.inmemory
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
