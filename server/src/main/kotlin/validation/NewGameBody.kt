@@ -1,7 +1,5 @@
 package me.nekoalice.mafia.api.server.validation
 
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import me.nekoalice.mafia.api.dto.models.NewGameBody
 import me.nekoalice.mafia.api.dto.models.PlayerId
 import me.nekoalice.mafia.api.dto.models.Role
@@ -10,7 +8,7 @@ import kotlin.time.Clock
 fun NewGameBody.validate() {
     require(players.size == 10) { "players != 10" }
     require(
-        startTime < Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+        startTime < Clock.System.now()
     ) { "game started in the future" }
 
     val playerIdsUnique = mutableSetOf<PlayerId>()
