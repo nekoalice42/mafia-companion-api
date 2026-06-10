@@ -12,4 +12,8 @@ public value class TournamentId(public val value: Uuid) {
     public constructor(value: String) : this(Uuid.parse(value))
 
     override fun toString(): String = value.toString()
+
+    public companion object {
+        public fun new(): TournamentId = TournamentId(Uuid.generateV7())
+    }
 }
