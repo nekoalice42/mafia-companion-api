@@ -15,7 +15,7 @@ class InMemoryTournamentStorage : TournamentStorage {
 
     override suspend fun getByIdOrNull(id: TournamentId): Tournament? = tournaments[id]
 
-    override fun getAll(): Flow<Tournament> = tournaments.values.asFlow()
+    override suspend fun getAll(): List<Tournament> = tournaments.values.toList()
 
     override suspend fun delete(id: TournamentId) {
         tournaments.remove(id)

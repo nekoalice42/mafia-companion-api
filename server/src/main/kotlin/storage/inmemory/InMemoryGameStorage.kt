@@ -13,6 +13,6 @@ class InMemoryGameStorage : GameStorage {
         games.add(game)
     }
 
-    override fun getAll(tournamentId: TournamentId?): Flow<NewGameBody> =
-        games.filter { tournamentId == null || it.tournament == tournamentId }.asFlow()
+    override suspend fun getAll(tournamentId: TournamentId?): List<NewGameBody> =
+        games.filter { tournamentId == null || it.tournament == tournamentId }.toList()
 }

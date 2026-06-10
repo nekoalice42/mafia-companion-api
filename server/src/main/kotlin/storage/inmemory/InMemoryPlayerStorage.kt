@@ -15,7 +15,7 @@ class InMemoryPlayerStorage : PlayerStorage {
 
     override suspend fun getByIdOrNull(id: PlayerId): Player? = players[id]
 
-    override fun getAll(): Flow<Player> = players.values.asFlow()
+    override suspend fun getAll(): List<Player> = players.values.toList()
 
     override suspend fun delete(id: PlayerId) {
         players.remove(id)

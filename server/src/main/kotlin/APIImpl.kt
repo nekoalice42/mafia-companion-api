@@ -1,7 +1,6 @@
 package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
-import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.models.*
@@ -42,7 +41,7 @@ class APIImpl(
         Response.Success(HelloResponse())
 
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
-        Response.Success(ResponseList(playerStorage.getAll().toList()))
+        Response.Success(ResponseList(playerStorage.getAll()))
 
     override suspend fun getPlayer(playerId: PlayerId): Response<Player> =
         playerStorage.getByIdOrNull(playerId)?.let {
@@ -58,7 +57,7 @@ class APIImpl(
     }
 
     override suspend fun getTournaments(): Response<ResponseList<Tournament>> {
-        return Response.Success(ResponseList(tournamentStorage.getAll().toList()))
+        return Response.Success(ResponseList(tournamentStorage.getAll()))
     }
 
     override suspend fun getTournament(id: TournamentId): Response<Tournament> =
@@ -97,7 +96,7 @@ class APIImpl(
             "Tournament $tournamentId not found",
             HttpStatusCode.NotFound,
         )
-        val scoreboardSorted = calculateScoreboard(gameStorage.getAll(tournamentId).toList())
+        val scoreboardSorted = calculateScoreboard(gameStorage.getAll(tournamentId))
             .map {
                 it.toScoreboardRow(
                     playerStorage.getByIdOrNull(it.playerId)

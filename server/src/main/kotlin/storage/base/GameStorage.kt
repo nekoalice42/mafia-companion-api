@@ -6,5 +6,5 @@ import me.nekoalice.mafia.api.dto.models.TournamentId
 
 interface GameStorage {
     suspend fun create(game: NewGameBody)
-    fun getAll(tournamentId: TournamentId?): Flow<NewGameBody>
+    suspend fun getAll(tournamentId: TournamentId?): List<NewGameBody>
 }
