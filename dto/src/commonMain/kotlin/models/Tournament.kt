@@ -1,7 +1,5 @@
 package me.nekoalice.mafia.api.dto.models
 
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant
 
