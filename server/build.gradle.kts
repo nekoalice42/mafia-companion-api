@@ -1,6 +1,4 @@
 plugins {
-    // Apply the shared build logic from a convention plugin.
-    // The shared code is located in `buildSrc/src/main/kotlin/kotlin-jvm.gradle.kts`.
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
@@ -12,6 +10,7 @@ version = "0.1.0"
 
 dependencies {
     implementation(project(":apiContract"))
+    implementation(project(":dao"))
     implementation(project(":dto"))
 
     implementation(libs.bundles.server.ktor.server)

@@ -12,7 +12,8 @@ plugins {
 
 // Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
 include(":apiContract")
-include(":server")
 include(":dto")
+include(":dao")
+include(":server")
 
 rootProject.name = "mafia-companion-api"

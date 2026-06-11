@@ -18,7 +18,7 @@ class APIImpl(
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-alpha.2",
+        version = "0.1.0-alpha.3",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = "http://localhost:8080",
         productionUrl = "https://api.mafia.nekoalice.me",

@@ -6,17 +6,33 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryGameStorage
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryPlayerStorage
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryTournamentStorage
+import me.nekoalice.mafia.api.server.storage.GameStorage
+import me.nekoalice.mafia.api.server.storage.PlayerStorage
+import me.nekoalice.mafia.api.server.storage.StorageType
+import me.nekoalice.mafia.api.server.storage.TournamentStorage
+import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
+private fun Application.getProperty(path: String) = environment.config.property(path)
+private fun Application.getPropertyOrNull(path: String) = environment.config.propertyOrNull(path)
+
 fun Application.module() {
+    val storageType = getPropertyOrNull("mafia-api.storage.type")?.getString()
+        ?.let(StorageType::parse)
+        ?: StorageType.POSTGRESQL
+    if (storageType == StorageType.POSTGRESQL) {
+        R2dbcDatabase.connect(
+            url = "r2dbc:" + getProperty("mafia-api.storage.postgresql.url").getString(),
+            driver = "postgresql",
+            user = getProperty("mafia-api.storage.postgresql.user").getString(),
+            password = getProperty("mafia-api.storage.postgresql.password").getString(),
+        )
+    }
     val api = APIImpl(
-        tournamentStorage = InMemoryTournamentStorage(),
-        gameStorage = InMemoryGameStorage(),
-        playerStorage = InMemoryPlayerStorage(),
+        tournamentStorage = TournamentStorage(storageType),
+        gameStorage = GameStorage(storageType),
+        playerStorage = PlayerStorage(storageType),
     )
     install(ContentNegotiation) {
         json(
@@ -25,7 +41,6 @@ fun Application.module() {
             }
         )
     }
-//    install(Resources)
     install(CORS) {
         anyHost()
         api.requiredHeaders.forEach { allowHeader(it) }
