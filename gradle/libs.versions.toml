@@ -50,6 +50,14 @@ dto-projectDependencies = [
 dto-projectDependencies-test = [
     "kotlin-test",
 ]
+migrations-projectDependencies = [
+    "exposed-core",
+    "exposed-kotlin-datetime",
+    "exposed-r2dbc",
+]
+migrations-peerDependencies = [
+    "postgresql-r2dbc",
+]
 dao-projectDependencies = [
     "exposed-core",
     "exposed-kotlin-datetime",

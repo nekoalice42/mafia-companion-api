@@ -14,6 +14,7 @@ plugins {
 include(":apiContract")
 include(":dto")
 include(":dao")
+include(":migrations")
 include(":server")
 
 rootProject.name = "mafia-companion-api"
