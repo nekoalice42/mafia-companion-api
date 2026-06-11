@@ -276,10 +276,7 @@ public abstract class BaseAPI(
         HttpMethod.Delete,
     )
 
-    public val requiredHeaders: List<String> = listOf(
-        HttpHeaders.Accept,
-        HttpHeaders.ContentType,
-    )
+    public val requiredHeaders: List<String> = listOf()
 
     public sealed interface Response<SuccessT : Any> {
         public data class Success<T : Any>(

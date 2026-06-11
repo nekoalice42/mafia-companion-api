@@ -1,5 +1,6 @@
 package me.nekoalice.mafia.api.server
 
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -43,6 +44,7 @@ fun Application.module() {
     }
     install(CORS) {
         anyHost()
+        allowHeader(HttpHeaders.ContentType)
         api.requiredHeaders.forEach { allowHeader(it) }
         api.requiredMethods.forEach { allowMethod(it) }
     }
