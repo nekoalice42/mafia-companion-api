@@ -37,26 +37,27 @@ class PostgreSQLGameStorage : GameStorage {
         if (tournamentId != null) {
             query = query.where { Games.tournamentId eq tournamentId.value }
         }
-        query.map {
+        val gamesRaw = query.toList()
+        gamesRaw.map { gamesResult ->
             val players = InGamePlayers.selectAll()
-                .where { InGamePlayers.gameId eq it[Games.id] }
-                .map { igp ->
+                .where { InGamePlayers.gameId eq gamesResult[Games.id] }
+                .map { playersResult ->
                     InGamePlayer(
-                        playerId = PlayerId(igp[InGamePlayers.playerId].value),
-                        role = mapDaoRole(igp[InGamePlayers.role]),
-                        extraPoints = if (igp[InGamePlayers.extraPoints] != null)
+                        playerId = PlayerId(playersResult[InGamePlayers.playerId].value),
+                        role = mapDaoRole(playersResult[InGamePlayers.role]),
+                        extraPoints = if (playersResult[InGamePlayers.extraPoints] != null)
                             ExtraPointsDescribed(
-                                pointsX100 = igp[InGamePlayers.extraPoints]!!,
-                                description = igp[InGamePlayers.extraPointsDescription]!!,
+                                pointsX100 = playersResult[InGamePlayers.extraPoints]!!,
+                                description = playersResult[InGamePlayers.extraPointsDescription]!!,
                             ) else null,
-                        guessedMafiaCount = igp[InGamePlayers.guessedMafiaCount],
+                        guessedMafiaCount = playersResult[InGamePlayers.guessedMafiaCount],
                     )
                 }.toList()
             NewGameBody(
-                tournament = TournamentId(it[Games.tournamentId]),
+                tournament = TournamentId(gamesResult[Games.tournamentId]),
                 players = players,
-                winnerTeam = mapDaoWinnerTeam(it[Games.winnerTeam]),
-                startTime = it[Games.startedAt],
+                winnerTeam = mapDaoWinnerTeam(gamesResult[Games.winnerTeam]),
+                startTime = gamesResult[Games.startedAt],
             )
         }.toList()
     }
