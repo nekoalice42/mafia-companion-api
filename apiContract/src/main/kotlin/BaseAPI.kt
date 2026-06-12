@@ -3,13 +3,18 @@ package me.nekoalice.mafia.api.contracts
 import io.ktor.http.*
 import io.ktor.openapi.*
 import io.ktor.server.application.*
+import io.ktor.server.resources.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.openapi.*
 import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
+import me.nekoalice.mafia.api.contracts.resources.GameResource
+import me.nekoalice.mafia.api.contracts.resources.PlayerResource
+import me.nekoalice.mafia.api.contracts.resources.TournamentResource
 import me.nekoalice.mafia.api.dto.models.*
+import kotlin.uuid.ExperimentalUuidApi
 
 public abstract class BaseAPI(
     private val info: APIInfo,
@@ -28,8 +33,8 @@ public abstract class BaseAPI(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>>
 
-    @OptIn(ExperimentalKtorApi::class)
-    public fun applyTo(routing: Routing): Unit = with(routing) {
+    @OptIn(ExperimentalKtorApi::class, ExperimentalUuidApi::class)
+    public fun applyRoutesTo(routing: Routing): Unit = with(routing) {
         get("/openapi.json") {
             val doc = OpenApiDoc(
                 info = OpenApiInfo(
@@ -68,7 +73,7 @@ public abstract class BaseAPI(
             }
         }
 
-        get("/player") {
+        get<PlayerResource> {
             call.respond(getPlayers())
         }.describe {
             responses {
@@ -81,8 +86,8 @@ public abstract class BaseAPI(
             }
         }
 
-        put<Player>("/player") {
-            call.respond(upsertPlayer(it))
+        put<PlayerResource, Player> { _, player ->
+            call.respond(upsertPlayer(player))
         }.describe {
             requestBody {
                 required = true
@@ -97,9 +102,8 @@ public abstract class BaseAPI(
             }
         }
 
-        get("/player/{player_id}") {
-            val playerId = PlayerId(call.pathParameters["player_id"]!!)
-            call.respond(getPlayer(playerId))
+        get<PlayerResource.ById> { res ->
+            call.respond(getPlayer(res.player_id))
         }.describe {
             parameters {
                 path("player_id") {
@@ -124,9 +128,8 @@ public abstract class BaseAPI(
             }
         }
 
-        delete("/player/{player_id}") {
-            val playerId = PlayerId(call.pathParameters["player_id"]!!)
-            call.respond(deletePlayer(playerId))
+        delete<PlayerResource.ById> { res ->
+            call.respond(deletePlayer(res.player_id))
         }.describe {
             parameters {
                 path("player_id") {
@@ -140,7 +143,7 @@ public abstract class BaseAPI(
             }
         }
 
-        get("/tournament") {
+        get<TournamentResource> {
             call.respond(getTournaments())
         }.describe {
             responses {
@@ -153,9 +156,8 @@ public abstract class BaseAPI(
             }
         }
 
-        get("/tournament/{tournament_id}") {
-            val id = TournamentId(call.pathParameters["tournament_id"]!!)
-            call.respond(getTournament(id))
+        get<TournamentResource.ById> { res ->
+            call.respond(getTournament(res.tournament_id))
         }.describe {
             parameters {
                 path("tournament_id") {
@@ -180,8 +182,8 @@ public abstract class BaseAPI(
             }
         }
 
-        put<Tournament>("/tournament") {
-            call.respond(upsertTournament(it))
+        put<TournamentResource, Tournament> { _, tournament ->
+            call.respond(upsertTournament(tournament))
         }.describe {
             requestBody {
                 required = true
@@ -196,9 +198,8 @@ public abstract class BaseAPI(
             }
         }
 
-        delete("/tournament/{tournament_id}") {
-            val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
-            call.respond(deleteTournament(tournamentId))
+        delete<TournamentResource.ById> { res ->
+            call.respond(deleteTournament(res.tournament_id))
         }.describe {
             parameters {
                 path("tournament_id") {
@@ -212,8 +213,8 @@ public abstract class BaseAPI(
             }
         }
 
-        post<NewGameBody>("/game") {
-            call.respond(createGame(it))
+        post<GameResource, NewGameBody> { _, game ->
+            call.respond(createGame(game))
         }.describe {
             requestBody {
                 required = true
@@ -242,9 +243,8 @@ public abstract class BaseAPI(
             }
         }
 
-        get("/tournament/{tournament_id}/scoreboard") {
-            val tournamentId = TournamentId(call.pathParameters["tournament_id"]!!)
-            call.respond(getScoreboard(tournamentId))
+        get<TournamentResource.ById.Scoreboard> { res ->
+            call.respond(getScoreboard(res.parent.tournament_id))
         }.describe {
             parameters {
                 path("tournament_id") {

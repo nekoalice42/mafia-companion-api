@@ -5,6 +5,7 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.resources.Resources
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.server.storage.GameStorage
@@ -48,7 +49,8 @@ fun Application.module() {
         api.requiredHeaders.forEach { allowHeader(it) }
         api.requiredMethods.forEach { allowMethod(it) }
     }
+    install(Resources)
     routing {
-        api.applyTo(this)
+        api.applyRoutesTo(this)
     }
 }

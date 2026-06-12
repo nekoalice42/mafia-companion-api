@@ -34,6 +34,7 @@ postgresql-r2dbc = { module = "org.postgresql:r2dbc-postgresql", version.ref = "
 
 [bundles]
 apiContract-projectDependencies = [
+    "ktor-server-resources",
     "ktor-server-routing-openapi",
     "kotlinx-serialization-json",
 ]
