@@ -7,7 +7,4 @@
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
-    <logger name="me.nekoalice.mafia.api" level="DEBUG"/>
-    <logger name="io.ktor" level="TRACE"/>
-    <logger name="Application" level="TRACE"/>
 </configuration>
