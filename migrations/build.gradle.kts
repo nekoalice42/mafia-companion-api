@@ -9,5 +9,5 @@ dependencies {
 }
 
 application {
-    mainClass = "me.nekoalice.mafia.migrations.MainKt"
+    mainClass = "me.nekoalice.mafia.api.migrations.MainKt"
 }
