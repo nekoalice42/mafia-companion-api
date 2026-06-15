@@ -1,0 +1,13 @@
+services:
+  server:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.mafia-api.rule: "Host(`api.mafia.nekoalice.me`)"
+    networks:
+      - default
+      - services
+
+networks:
+  services:
+    name: docker-services
+    external: true

@@ -1,0 +1,10 @@
+.git/
+.gradle/
+.idea/
+.kotlin/
+.vscode/
+**/build/
+gradle/wrapper/
+.env
+.gitignore
+gradlew*
