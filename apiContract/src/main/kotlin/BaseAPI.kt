@@ -10,9 +10,7 @@ import io.ktor.server.routing.openapi.*
 import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
-import me.nekoalice.mafia.api.contracts.resources.GameResource
-import me.nekoalice.mafia.api.contracts.resources.PlayerResource
-import me.nekoalice.mafia.api.contracts.resources.TournamentResource
+import me.nekoalice.mafia.api.contracts.resources.*
 import me.nekoalice.mafia.api.dto.models.*
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -35,7 +33,7 @@ public abstract class BaseAPI(
 
     @OptIn(ExperimentalKtorApi::class, ExperimentalUuidApi::class)
     public fun applyRoutesTo(routing: Routing): Unit = with(routing) {
-        get("/openapi.json") {
+        get<OpenAPIJSONResource> {
             val doc = OpenApiDoc(
                 info = OpenApiInfo(
                     title = info.name,
@@ -60,7 +58,7 @@ public abstract class BaseAPI(
             call.respondText(encodedDoc, ContentType.Application.Json)
         }.hide()
 
-        get("/") {
+        get<RootResource> {
             call.respond(getRoot())
         }.describe {
             responses {
