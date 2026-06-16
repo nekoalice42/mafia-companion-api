@@ -8,7 +8,6 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-// must be ordered by version!
 val migrations = listOf(
     V01Init,
 )
@@ -64,6 +63,20 @@ suspend fun runMigrations(
     }
 }
 
+context(_: R2dbcTransaction)
+suspend fun migrationUp(migration: Migration) {
+    migration.up()
+    MigrationsTable.versionUp()
+    logger.info("Migration ${migration::class.simpleName} applied")
+}
+
+context(_: R2dbcTransaction)
+suspend fun migrationDown(migration: Migration) {
+    migration.down()
+    MigrationsTable.versionDown()
+    logger.info("Migration ${migration::class.simpleName} reverted")
+}
+
 suspend fun main(args: Array<String>) {
     R2dbcDatabase.connect(
         url = "r2dbc:" + env("DATABASE_URL"),
@@ -75,29 +88,39 @@ suspend fun main(args: Array<String>) {
     val currentVersion: UInt = suspendTransaction {
         MigrationsTable.createAndInit()
     }
+    logger.debug("Current version: $currentVersion")
 
     val action = if (args.isEmpty()) "latest" else args[0]
-    // TODO: add up and down by X
+    logger.debug("Args: '{}'", args)
+    logger.debug("Action: $action")
     when (action) {
         "latest" -> runMigrations(
             migrations
                 .filter { it.version > currentVersion }
                 .sortedBy { it.version },
-        ) {
-            it.up()
-            MigrationsTable.versionUp()
-            logger.info("Migration ${it::class.simpleName} applied")
-        }
+        ) { migrationUp(it) }
 
         "clear" -> runMigrations(
             migrations
                 .filter { it.version <= currentVersion }
                 .sortedByDescending { it.version },
-        ) {
-            it.down()
-            MigrationsTable.versionDown()
-            logger.info("Migration ${it::class.simpleName} reverted")
-        }
+        ) { migrationDown(it) }
+
+        "upto" -> args.getOrNull(1)?.toUInt()?.let { targetVersion ->
+            runMigrations(
+                migrations
+                    .filter { it.version in (currentVersion + 1u)..targetVersion }
+                    .sortedBy { it.version },
+            ) { migrationUp(it) }
+        } ?: throw IllegalArgumentException("Target version must be specified")
+
+        "downto" -> args.getOrNull(1)?.toUInt()?.let { targetVersion ->
+            runMigrations(
+                migrations
+                    .filter { it.version in currentVersion downTo (targetVersion + 1u) }
+                    .sortedByDescending { it.version },
+            ) { migrationDown(it) }
+        } ?: throw IllegalArgumentException("Target version must be specified")
 
         else -> throw IllegalArgumentException("Invalid action: $action")
     }
