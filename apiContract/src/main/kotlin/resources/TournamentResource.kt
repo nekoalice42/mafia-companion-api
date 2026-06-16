@@ -5,16 +5,16 @@ import me.nekoalice.mafia.api.dto.models.TournamentId
 import kotlin.uuid.ExperimentalUuidApi
 
 @Resource("/tournament")
-public open class TournamentResource {
+internal class TournamentResource {
     @OptIn(ExperimentalUuidApi::class)
     @Resource("/{tournament_id}")
-    public class ById(
-        public val parent: TournamentResource,
-        @Suppress("PropertyName") public val tournament_id: TournamentId,
+    class ById(
+        val parent: TournamentResource,
+        @Suppress("PropertyName") val tournament_id: TournamentId,
     ) {
         @Resource("/scoreboard")
-        public class Scoreboard(
-            public val parent: ById,
+        class Scoreboard(
+            val parent: ById,
         )
     }
 }

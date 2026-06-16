@@ -5,11 +5,11 @@ import me.nekoalice.mafia.api.dto.models.PlayerId
 import kotlin.uuid.ExperimentalUuidApi
 
 @Resource("/player")
-public class PlayerResource {
+internal class PlayerResource {
     @OptIn(ExperimentalUuidApi::class)
     @Resource("/{player_id}")
-    public class ById(
-        public val parent: PlayerResource,
-        @Suppress("PropertyName") public val player_id: PlayerId,
+    class ById(
+        val parent: PlayerResource,
+        @Suppress("PropertyName") val player_id: PlayerId,
     )
 }
