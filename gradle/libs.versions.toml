@@ -57,6 +57,7 @@ migrations-projectDependencies = [
     "exposed-r2dbc",
 ]
 migrations-peerDependencies = [
+    "logback",
     "postgresql-r2dbc",
 ]
 dao-projectDependencies = [
