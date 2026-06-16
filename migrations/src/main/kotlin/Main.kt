@@ -25,13 +25,17 @@ suspend fun main(args: Array<String>) {
     when (action) {
         "latest" -> migrations.forEach {
             suspendTransaction {
-                it.up()
+                context(this) {
+                    it.up()
+                }
             }
         }
 
         "first" -> migrations.forEach {
             suspendTransaction {
-                it.down()
+                context(this) {
+                    it.down()
+                }
             }
         }
 

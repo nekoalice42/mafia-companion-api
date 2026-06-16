@@ -5,6 +5,7 @@ import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.datetime.timestamp
+import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -51,10 +52,12 @@ private object Tables {
 object V01Init : Migration {
     override val version = 1
 
+    context(transaction: R2dbcTransaction)
     override suspend fun up() {
         SchemaUtils.create(*Tables.all)
     }
 
+    context(transaction: R2dbcTransaction)
     override suspend fun down() {
         SchemaUtils.drop(*Tables.all)
     }
