@@ -8,10 +8,8 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.resources.Resources
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
-import me.nekoalice.mafia.api.server.storage.GameStorage
-import me.nekoalice.mafia.api.server.storage.PlayerStorage
+import me.nekoalice.mafia.api.server.storage.StorageProvider
 import me.nekoalice.mafia.api.server.storage.StorageType
-import me.nekoalice.mafia.api.server.storage.TournamentStorage
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
@@ -32,9 +30,7 @@ fun Application.module() {
         )
     }
     val api = APIImpl(
-        tournamentStorage = TournamentStorage(storageType),
-        gameStorage = GameStorage(storageType),
-        playerStorage = PlayerStorage(storageType),
+        storages = StorageProvider(storageType),
     )
     install(ContentNegotiation) {
         json(

@@ -1,13 +1,13 @@
 package me.nekoalice.mafia.api.server.storage
 
-import me.nekoalice.mafia.api.server.storage.base.GameStorage
-import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
-import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
+import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryGameStorage
 import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryPlayerStorage
+import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryStorageProvider
 import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryTournamentStorage
 import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLGameStorage
 import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLPlayerStorage
+import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLStorageProvider
 import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLTournamentStorage
 
 enum class StorageType {
@@ -37,17 +37,16 @@ enum class StorageType {
     }
 }
 
-fun GameStorage(type: StorageType): GameStorage = when (type) {
-    StorageType.IN_MEMORY -> InMemoryGameStorage()
-    StorageType.POSTGRESQL -> PostgreSQLGameStorage()
-}
+fun StorageProvider(type: StorageType): StorageProvider = when (type) {
+    StorageType.IN_MEMORY -> InMemoryStorageProvider(
+        game = InMemoryGameStorage(),
+        player = InMemoryPlayerStorage(),
+        tournament = InMemoryTournamentStorage()
+    )
 
-fun PlayerStorage(type: StorageType): PlayerStorage = when (type) {
-    StorageType.IN_MEMORY -> InMemoryPlayerStorage()
-    StorageType.POSTGRESQL -> PostgreSQLPlayerStorage()
-}
-
-fun TournamentStorage(type: StorageType): TournamentStorage = when (type) {
-    StorageType.IN_MEMORY -> InMemoryTournamentStorage()
-    StorageType.POSTGRESQL -> PostgreSQLTournamentStorage()
+    StorageType.POSTGRESQL -> PostgreSQLStorageProvider(
+        game = PostgreSQLGameStorage(),
+        player = PostgreSQLPlayerStorage(),
+        tournament = PostgreSQLTournamentStorage()
+    )
 }

@@ -5,16 +5,12 @@ import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.models.*
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
-import me.nekoalice.mafia.api.server.storage.base.GameStorage
-import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
-import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
+import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.utils.calculateScoreboard
 import me.nekoalice.mafia.api.server.validation.validate
 
 class APIImpl(
-    val tournamentStorage: TournamentStorage,
-    val gameStorage: GameStorage,
-    val playerStorage: PlayerStorage,
+    val storages: StorageProvider,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
@@ -41,40 +37,40 @@ class APIImpl(
         Response.Success(HelloResponse())
 
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
-        Response.Success(ResponseList(playerStorage.getAll()))
+        Response.Success(ResponseList(storages.player.getAll()))
 
     override suspend fun getPlayer(playerId: PlayerId): Response<Player> =
-        playerStorage.getByIdOrNull(playerId)?.let {
+        storages.player.getByIdOrNull(playerId)?.let {
             Response.Success(it)
         } ?: Response.Error("Player not found", HttpStatusCode.NotFound)
 
     override suspend fun upsertPlayer(player: Player): Response<Unit> =
-        upsert(playerStorage, player, player.id)
+        upsert(storages.player, player, player.id)
 
     override suspend fun deletePlayer(playerId: PlayerId): Response<Unit> {
-        playerStorage.delete(playerId)
+        storages.player.delete(playerId)
         return Response.Success(HttpStatusCode.NoContent)
     }
 
     override suspend fun getTournaments(): Response<ResponseList<Tournament>> {
-        return Response.Success(ResponseList(tournamentStorage.getAll()))
+        return Response.Success(ResponseList(storages.tournament.getAll()))
     }
 
     override suspend fun getTournament(id: TournamentId): Response<Tournament> =
-        tournamentStorage.getByIdOrNull(id)?.let {
+        storages.tournament.getByIdOrNull(id)?.let {
             Response.Success(it)
         } ?: Response.Error("Tournament not found", HttpStatusCode.NotFound)
 
     override suspend fun upsertTournament(tournament: Tournament): Response<Unit> =
-        upsert(tournamentStorage, tournament, tournament.id)
+        upsert(storages.tournament, tournament, tournament.id)
 
     override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
-        tournamentStorage.delete(tournamentId)
+        storages.tournament.delete(tournamentId)
         return Response.Success(HttpStatusCode.NoContent)
     }
 
     override suspend fun createGame(game: NewGameBody): Response<Unit> {
-        if (tournamentStorage.getByIdOrNull(game.tournament) == null) {
+        if (storages.tournament.getByIdOrNull(game.tournament) == null) {
             return Response.Error(
                 "Tournament ${game.tournament} not found",
                 HttpStatusCode.NotFound,
@@ -85,21 +81,21 @@ class APIImpl(
         } catch (e: IllegalArgumentException) {
             return Response.Error(e, HttpStatusCode.UnprocessableEntity)
         }
-        gameStorage.create(game)
+        storages.game.create(game)
         return Response.Success(HttpStatusCode.Created)
     }
 
     override suspend fun getScoreboard(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>> {
-        tournamentStorage.getByIdOrNull(tournamentId) ?: return Response.Error(
+        storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
             "Tournament $tournamentId not found",
             HttpStatusCode.NotFound,
         )
-        val scoreboardSorted = calculateScoreboard(gameStorage.getAll(tournamentId))
+        val scoreboardSorted = calculateScoreboard(storages.game.getAll(tournamentId))
             .map {
                 it.toScoreboardRow(
-                    playerStorage.getByIdOrNull(it.playerId)
+                    storages.player.getByIdOrNull(it.playerId)
                         ?: Player(it.playerId, "Unknown player ${it.playerId}")
                 )
             }
