@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 
 val migrations = listOf(
     V01Init,
+    V02AddSeatColumn,
 )
 
 val logger: Logger = LoggerFactory.getLogger("Migrations")

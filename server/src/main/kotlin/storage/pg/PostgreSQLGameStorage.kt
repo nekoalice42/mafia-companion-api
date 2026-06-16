@@ -21,13 +21,14 @@ class PostgreSQLGameStorage : GameStorage {
                 it[winnerTeam] = mapDtoTeam(game.winnerTeam)
                 it[startedAt] = game.startTime
             }
-            InGamePlayers.batchInsert(game.players) {
+            InGamePlayers.batchInsert(game.players.withIndex()) { (index, player) ->
                 this[InGamePlayers.gameId] = newGameId
-                this[InGamePlayers.playerId] = it.playerId.value
-                this[InGamePlayers.role] = mapDtoRole(it.role)
-                this[InGamePlayers.extraPoints] = it.extraPoints?.pointsX100
-                this[InGamePlayers.extraPointsDescription] = it.extraPoints?.description
-                this[InGamePlayers.guessedMafiaCount] = it.guessedMafiaCount
+                this[InGamePlayers.playerId] = player.playerId.value
+                this[InGamePlayers.seat] = index + 1
+                this[InGamePlayers.role] = mapDtoRole(player.role)
+                this[InGamePlayers.extraPoints] = player.extraPoints?.pointsX100
+                this[InGamePlayers.extraPointsDescription] = player.extraPoints?.description
+                this[InGamePlayers.guessedMafiaCount] = player.guessedMafiaCount
             }
         }
     }
@@ -41,6 +42,7 @@ class PostgreSQLGameStorage : GameStorage {
         gamesRaw.map { gamesResult ->
             val players = InGamePlayers.selectAll()
                 .where { InGamePlayers.gameId eq gamesResult[Games.id] }
+                .orderBy(InGamePlayers.seat)
                 .map { playersResult ->
                     InGamePlayer(
                         playerId = PlayerId(playersResult[InGamePlayers.playerId].value),
