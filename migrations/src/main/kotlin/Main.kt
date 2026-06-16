@@ -31,7 +31,7 @@ suspend fun main(args: Array<String>) {
             }
         }
 
-        "first" -> migrations.forEach {
+        "first" -> migrations.asReversed().forEach {
             suspendTransaction {
                 context(this) {
                     it.down()
