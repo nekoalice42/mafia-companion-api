@@ -10,7 +10,7 @@ import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
 import kotlin.uuid.ExperimentalUuidApi
 
 object V01Init : Migration {
-    override val version = 1
+    override val version = 1u
 
     context(transaction: R2dbcTransaction)
     override suspend fun up() {
