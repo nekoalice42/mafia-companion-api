@@ -36,6 +36,24 @@ class APIImpl(
     override suspend fun getRoot(): Response<HelloResponse> =
         Response.Success(HelloResponse())
 
+    override suspend fun getHealth(): Response<HealthResponse> {
+        val isDatabaseHealthy = try {
+            storages.ping()
+            true
+        } catch (_: Exception) {
+            false
+        }
+
+        val health = HealthResponse(
+            isDatabaseHealthy = isDatabaseHealthy,
+        )
+
+        return Response.Success(
+            health,
+            if (health.status) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable,
+        )
+    }
+
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
         Response.Success(ResponseList(storages.player.getAll()))
 

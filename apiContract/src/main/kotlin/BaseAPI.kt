@@ -18,6 +18,7 @@ public abstract class BaseAPI(
     private val info: APIInfo,
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
+    public abstract suspend fun getHealth(): Response<HealthResponse>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
     public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
     public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
@@ -66,7 +67,26 @@ public abstract class BaseAPI(
                     content {
                         schema = jsonSchema<HelloResponse>()
                     }
-                    description = "Health check (greeting)"
+                    description = "Liveness check"
+                }
+            }
+        }
+
+        get<HealthResource> {
+            call.respond(getHealth())
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<HealthResponse>()
+                    }
+                    description = "Health check succeeded"
+                }
+                HttpStatusCode.ServiceUnavailable {
+                    content {
+                        schema = jsonSchema<HealthResponse>()
+                    }
+                    description = "Health check failed"
                 }
             }
         }
