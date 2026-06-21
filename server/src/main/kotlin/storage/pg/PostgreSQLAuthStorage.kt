@@ -71,7 +71,7 @@ class PostgreSQLAuthStorage : AuthStorage {
                 .where { AccessTokens.hash eq hashToken(accessToken) }
                 .singleOrNull()
         }
-            ?.takeIf { it[AccessTokens.expiresAt] < Clock.System.now() }
+            ?.takeIf { it[AccessTokens.expiresAt] > Clock.System.now() }
             ?.let { UserId(it[AccessTokens.id].value) }
 
     override suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId? =
@@ -80,7 +80,7 @@ class PostgreSQLAuthStorage : AuthStorage {
                 .where { RefreshTokens.hash eq hashToken(refreshToken) }
                 .singleOrNull()
         }
-            ?.takeIf { it[RefreshTokens.expiresAt] < Clock.System.now() }
+            ?.takeIf { it[RefreshTokens.expiresAt] > Clock.System.now() }
             ?.let { UserId(it[RefreshTokens.id].value) }
 
     override suspend fun revokeTokens(userId: UserId) {
