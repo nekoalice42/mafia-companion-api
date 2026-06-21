@@ -1,14 +1,8 @@
 package me.nekoalice.mafia.api.server.storage
 
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryGameStorage
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryPlayerStorage
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryStorageProvider
-import me.nekoalice.mafia.api.server.storage.inmemory.InMemoryTournamentStorage
-import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLGameStorage
-import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLPlayerStorage
-import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLStorageProvider
-import me.nekoalice.mafia.api.server.storage.pg.PostgreSQLTournamentStorage
+import me.nekoalice.mafia.api.server.storage.inmemory.*
+import me.nekoalice.mafia.api.server.storage.pg.*
 
 enum class StorageType {
     IN_MEMORY,
@@ -39,14 +33,18 @@ enum class StorageType {
 
 fun StorageProvider(type: StorageType): StorageProvider = when (type) {
     StorageType.IN_MEMORY -> InMemoryStorageProvider(
+        auth = InMemoryAuthStorage(),
         game = InMemoryGameStorage(),
         player = InMemoryPlayerStorage(),
-        tournament = InMemoryTournamentStorage()
+        tournament = InMemoryTournamentStorage(),
+        user = InMemoryUserStorage(),
     )
 
     StorageType.POSTGRESQL -> PostgreSQLStorageProvider(
+        auth = PostgreSQLAuthStorage(),
         game = PostgreSQLGameStorage(),
         player = PostgreSQLPlayerStorage(),
-        tournament = PostgreSQLTournamentStorage()
+        tournament = PostgreSQLTournamentStorage(),
+        user = PostgreSQLUserStorage(),
     )
 }

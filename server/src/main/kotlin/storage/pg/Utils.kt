@@ -2,6 +2,7 @@ package me.nekoalice.mafia.api.server.storage.pg
 
 import me.nekoalice.mafia.api.dao.Players
 import me.nekoalice.mafia.api.dao.Tournaments
+import me.nekoalice.mafia.api.dao.Users
 import me.nekoalice.mafia.api.dao.WinnerTeam
 import me.nekoalice.mafia.api.dto.models.*
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -59,4 +60,10 @@ internal fun tournamentFromDao(row: ResultRow): Tournament =
         name = row[Tournaments.name],
         startDate = row[Tournaments.startsAt],
         endDate = row[Tournaments.endsAt],
+    )
+
+internal fun userFromDao(row: ResultRow): User =
+    User(
+        id = UserId(row[Users.id].value),
+        username = row[Users.username],
     )

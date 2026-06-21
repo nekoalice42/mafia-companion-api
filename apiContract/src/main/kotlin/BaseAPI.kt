@@ -3,7 +3,9 @@ package me.nekoalice.mafia.api.contracts
 import io.ktor.http.*
 import io.ktor.openapi.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.principal
 import io.ktor.server.resources.*
+import io.ktor.server.resources.patch
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.routing.openapi.*
@@ -19,6 +21,10 @@ public abstract class BaseAPI(
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getHealth(): Response<HealthResponse>
+    public abstract suspend fun login(loginData: LoginData): Response<TokenPair>
+    public abstract suspend fun changePassword(loginData: LoginData): Response<Unit>
+    public abstract suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair>
+    public abstract suspend fun logoutAll(userId: UserId): Response<Unit>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
     public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
     public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
@@ -32,74 +38,40 @@ public abstract class BaseAPI(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>>
 
-    @OptIn(ExperimentalKtorApi::class, ExperimentalUuidApi::class)
-    public fun applyRoutesTo(routing: Routing): Unit = with(routing) {
-        get<OpenAPIJSONResource> {
-            val doc = OpenApiDoc(
-                info = OpenApiInfo(
-                    title = info.name,
-                    version = info.version,
-                    license = info.licenseIdentifier?.let {
-                        OpenApiInfo.License(
-                            name = it,
-                            identifier = it,
-                        )
-                    },
-                ),
-                servers = listOfNotNull(
-                    info.developmentUrl?.let {
-                        Server(url = it, description = "Development server")
-                    },
-                    info.productionUrl?.let {
-                        Server(url = it, description = "Production server")
-                    }
-                ),
-            ) + call.application.routingRoot.descendants()
-            val encodedDoc = openapiJsonConfig.encodeToString(doc)
-            call.respondText(encodedDoc, ContentType.Application.Json)
-        }.hide()
+    public abstract suspend fun handleAuthentication(token: AccessToken): UserId?
 
-        get<RootResource> {
-            call.respond(getRoot())
+    @OptIn(ExperimentalKtorApi::class)
+    public fun applySecureRoutesTo(routing: Route): Unit = with(routing) {
+        put<AuthResource.Password, LoginData> { _, loginData ->
+            call.respond(changePassword(loginData))
         }.describe {
             responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<HelloResponse>()
-                    }
-                    description = "Liveness check"
+                HttpStatusCode.NoContent {
+                    description = "Successfully changed password"
                 }
+                HttpStatusCode.BadRequest {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "User not found"
+                }
+                HttpStatusCode.Unauthorized {
+                    description = "Invalid credentials"
+                }
+                commonKtorBodyErrorResponses("LoginData")
             }
         }
 
-        get<HealthResource> {
-            call.respond(getHealth())
+        delete<AuthResource.Token> {
+            val userId = call.principal<UserId>()!!
+            call.respond(logoutAll(userId))
         }.describe {
             responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<HealthResponse>()
-                    }
-                    description = "Health check succeeded"
+                HttpStatusCode.NoContent {
+                    description = "Successfully logged out"
                 }
-                HttpStatusCode.ServiceUnavailable {
-                    content {
-                        schema = jsonSchema<HealthResponse>()
-                    }
-                    description = "Health check failed"
-                }
-            }
-        }
-
-        get<PlayerResource> {
-            call.respond(getPlayers())
-        }.describe {
-            responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<ResponseList<Player>>()
-                    }
-                    description = "List of players"
+                HttpStatusCode.Unauthorized {
+                    description = "Token is invalid or not provided"
                 }
             }
         }
@@ -120,32 +92,6 @@ public abstract class BaseAPI(
             }
         }
 
-        get<PlayerResource.ById> { res ->
-            call.respond(getPlayer(res.player_id))
-        }.describe {
-            parameters {
-                path("player_id") {
-                    required = true
-                    description = "Player ID to retrieve"
-                    schema = jsonSchema<PlayerId>()
-                }
-            }
-            responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<Player>()
-                    }
-                    description = "Player details"
-                }
-                HttpStatusCode.NotFound {
-                    content {
-                        schema = jsonSchema<ErrorResponse>()
-                    }
-                    description = "Player not found"
-                }
-            }
-        }
-
         delete<PlayerResource.ById> { res ->
             call.respond(deletePlayer(res.player_id))
         }.describe {
@@ -158,45 +104,6 @@ public abstract class BaseAPI(
             }
             responses {
                 commonDeleteResponses("Player")
-            }
-        }
-
-        get<TournamentResource> {
-            call.respond(getTournaments())
-        }.describe {
-            responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<ResponseList<Tournament>>()
-                    }
-                    description = "List of tournaments"
-                }
-            }
-        }
-
-        get<TournamentResource.ById> { res ->
-            call.respond(getTournament(res.tournament_id))
-        }.describe {
-            parameters {
-                path("tournament_id") {
-                    required = true
-                    description = "Tournament ID to retrieve"
-                    schema = jsonSchema<TournamentId>()
-                }
-            }
-            responses {
-                HttpStatusCode.OK {
-                    content {
-                        schema = jsonSchema<Tournament>()
-                    }
-                    description = "Tournament details"
-                }
-                HttpStatusCode.NotFound {
-                    content {
-                        schema = jsonSchema<ErrorResponse>()
-                    }
-                    description = "Tournament not found"
-                }
             }
         }
 
@@ -260,6 +167,213 @@ public abstract class BaseAPI(
                 commonKtorBodyErrorResponses("NewGameBody")
             }
         }
+    }
+
+    @OptIn(ExperimentalKtorApi::class, ExperimentalUuidApi::class)
+    public fun applyPublicRoutesTo(routing: Route): Unit = with(routing) {
+        get<OpenAPIJSONResource> {
+            val doc = OpenApiDoc(
+                info = OpenApiInfo(
+                    title = info.name,
+                    version = info.version,
+                    license = info.licenseIdentifier?.let {
+                        OpenApiInfo.License(
+                            name = it,
+                            identifier = it,
+                        )
+                    },
+                ),
+                servers = listOfNotNull(
+                    info.developmentUrl?.let {
+                        Server(url = it, description = "Development server")
+                    },
+                    info.productionUrl?.let {
+                        Server(url = it, description = "Production server")
+                    },
+                ),
+            ) + call.application.routingRoot.descendants()
+            val encodedDoc = openapiJsonConfig.encodeToString(doc)
+            call.respondText(encodedDoc, ContentType.Application.Json)
+        }.hide()
+
+        get<RootResource> {
+            call.respond(getRoot())
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<HelloResponse>()
+                    }
+                    description = "Liveness check"
+                }
+            }
+        }
+
+        get<HealthResource> {
+            call.respond(getHealth())
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<HealthResponse>()
+                    }
+                    description = "Health check succeeded"
+                }
+                HttpStatusCode.ServiceUnavailable {
+                    content {
+                        schema = jsonSchema<HealthResponse>()
+                    }
+                    description = "Health check failed"
+                }
+            }
+        }
+
+        post<AuthResource.Token, LoginData> { _, loginData ->
+            call.respond(login(loginData))
+        }.describe {
+            requestBody {
+                required = true
+                content {
+                    schema = jsonSchema<LoginData>()
+                }
+                description = "Login data"
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<TokenPair>()
+                    }
+                    description = "Login successful"
+                }
+                HttpStatusCode.Unauthorized {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Invalid credentials"
+                }
+                HttpStatusCode.UnprocessableEntity {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Username and password validation failed"
+                }
+                commonKtorBodyErrorResponses("LoginData")
+            }
+        }
+
+        patch<AuthResource.Token> {
+            val refreshToken = call.request.headers[CustomHttpHeaders.XRefreshToken]
+            if (refreshToken == null) {
+                call.respond(
+                    Response.Error<Unit>(
+                        message = "Refresh token is missing",
+                        statusCode = HttpStatusCode.Unauthorized,
+                    )
+                )
+                return@patch
+            }
+            call.respond(refreshLogin(RefreshToken(refreshToken)))
+        }.describe {
+            parameters {
+                header(CustomHttpHeaders.XRefreshToken) {
+                    required = true
+                    description = "Refresh token"
+                    schema = jsonSchema<RefreshToken>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<TokenPair>()
+                    }
+                    description = "New access and refresh tokens"
+                }
+                HttpStatusCode.Unauthorized {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Refresh token is missing or invalid"
+                }
+            }
+        }
+
+        get<PlayerResource> {
+            call.respond(getPlayers())
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<ResponseList<Player>>()
+                    }
+                    description = "List of players"
+                }
+            }
+        }
+
+        get<PlayerResource.ById> { res ->
+            call.respond(getPlayer(res.player_id))
+        }.describe {
+            parameters {
+                path("player_id") {
+                    required = true
+                    description = "Player ID to retrieve"
+                    schema = jsonSchema<PlayerId>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<Player>()
+                    }
+                    description = "Player details"
+                }
+                HttpStatusCode.NotFound {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Player not found"
+                }
+            }
+        }
+
+        get<TournamentResource> {
+            call.respond(getTournaments())
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<ResponseList<Tournament>>()
+                    }
+                    description = "List of tournaments"
+                }
+            }
+        }
+
+        get<TournamentResource.ById> { res ->
+            call.respond(getTournament(res.tournament_id))
+        }.describe {
+            parameters {
+                path("tournament_id") {
+                    required = true
+                    description = "Tournament ID to retrieve"
+                    schema = jsonSchema<TournamentId>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<Tournament>()
+                    }
+                    description = "Tournament details"
+                }
+                HttpStatusCode.NotFound {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Tournament not found"
+                }
+            }
+        }
 
         get<TournamentResource.ById.Scoreboard> { res ->
             call.respond(getScoreboard(res.parent.tournament_id))
@@ -291,10 +405,13 @@ public abstract class BaseAPI(
         HttpMethod.Get,
         HttpMethod.Post,
         HttpMethod.Put,
+        HttpMethod.Patch,
         HttpMethod.Delete,
     )
 
-    public val requiredHeaders: List<String> = listOf()
+    public val requiredHeaders: List<String> = listOf(
+        CustomHttpHeaders.XRefreshToken,
+    )
 
     public sealed interface Response<SuccessT : Any> {
         public data class Success<T : Any>(
@@ -303,13 +420,13 @@ public abstract class BaseAPI(
             private val typeInfo: TypeInfo?,
         ) : Response<T> {
             public constructor(
-                statusCode: HttpStatusCode = HttpStatusCode.OK
+                statusCode: HttpStatusCode = HttpStatusCode.OK,
             ) : this(null, statusCode, null)
 
             init {
                 require(
                     response != null && typeInfo != null
-                            || response == null && typeInfo == null
+                            || response == null && typeInfo == null,
                 ) { "Response=${response} and typeInfo=${typeInfo} must be both null or both non-null" }
             }
 

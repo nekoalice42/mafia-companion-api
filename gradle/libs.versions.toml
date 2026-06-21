@@ -8,6 +8,7 @@ kotlinx-datetime = "0.7.1"
 kotlinx-serialization = "1.11.0"
 ktor = "3.4.2"
 logback = "1.5.13"
+password4j = "1.8.4"
 postgresql-r2dbc = "1.1.1.RELEASE"
 
 [libraries]
@@ -20,6 +21,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-contentNegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -30,10 +32,12 @@ ktor-server-routing-openapi = { module = "io.ktor:ktor-server-routing-openapi", 
 ktor-server-statusPages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+password4j = { module = "com.password4j:password4j", version.ref = "password4j" }
 postgresql-r2dbc = { module = "org.postgresql:r2dbc-postgresql", version.ref = "postgresql-r2dbc" }
 
 [bundles]
 apiContract-projectDependencies = [
+    "ktor-server-auth",
     "ktor-server-resources",
     "ktor-server-routing-openapi",
     "kotlinx-serialization-json",
@@ -55,6 +59,7 @@ migrations-projectDependencies = [
     "exposed-core",
     "exposed-kotlin-datetime",
     "exposed-r2dbc",
+    "password4j",
 ]
 migrations-peerDependencies = [
     "logback",
@@ -72,6 +77,7 @@ server-ktor-server = [
 ]
 server-ktor-server-plugins = [
     "ktor-serialization-kotlinx-json",
+    "ktor-server-auth",
     "ktor-server-contentNegotiation",
     "ktor-server-cors",
     "ktor-server-resources",
@@ -87,6 +93,7 @@ server-projectDependencies = [
     "exposed-kotlin-datetime",
     "exposed-r2dbc",
     "kotlinx-datetime",
+    "password4j",
 ]
 server-peerDependencies = [
     "logback",

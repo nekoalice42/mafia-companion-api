@@ -1,13 +1,15 @@
 package me.nekoalice.mafia.api.server
 
-import io.ktor.http.HttpHeaders
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
-import io.ktor.server.resources.Resources
+import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import me.nekoalice.mafia.api.dto.models.AccessToken
 import me.nekoalice.mafia.api.server.storage.StorageProvider
 import me.nekoalice.mafia.api.server.storage.StorageType
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
@@ -36,17 +38,27 @@ fun Application.module() {
         json(
             Json(DefaultJson) {
                 prettyPrint = true
-            }
+            },
         )
     }
     install(CORS) {
         anyHost()
+        allowHeader(HttpHeaders.Authorization)
         allowHeader(HttpHeaders.ContentType)
         api.requiredHeaders.forEach { allowHeader(it) }
         api.requiredMethods.forEach { allowMethod(it) }
     }
     install(Resources)
+    authentication {
+        bearer("app-token") {
+            realm = "Mafia API"
+            authenticate { api.handleAuthentication(AccessToken(it.token)) }
+        }
+    }
     routing {
-        api.applyRoutesTo(this)
+        api.applyPublicRoutesTo(this)
+        authenticate("app-token") {
+            api.applySecureRoutesTo(this)
+        }
     }
 }

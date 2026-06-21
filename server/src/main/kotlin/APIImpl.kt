@@ -8,17 +8,23 @@ import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.utils.calculateScoreboard
 import me.nekoalice.mafia.api.server.validation.validate
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
+
+private val accessTokenExpiration = 30.minutes
+private val refreshTokenExpiration = 7.days
 
 class APIImpl(
     val storages: StorageProvider,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-alpha.3",
+        version = "0.1.0-alpha.4",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = "http://localhost:8080",
         productionUrl = "https://api.mafia.nekoalice.me",
-    )
+    ),
 ) {
     private suspend fun <StorageT : CRUDStorage<ItemT, IdT>, ItemT, IdT> upsert(
         storage: StorageT,
@@ -31,6 +37,25 @@ class APIImpl(
             true -> Response.Success(HttpStatusCode.NoContent)
             false -> Response.Success(HttpStatusCode.Created)
         }
+    }
+
+    private suspend fun recreateTokenPair(userId: UserId): TokenPair {
+        val tokens = storages.auth.recreateTokenPair(
+            userId = userId,
+            currentTime = Clock.System.now(),
+            accessTokenExpiration = accessTokenExpiration,
+            refreshTokenExpiration = refreshTokenExpiration,
+        )
+        return TokenPair(
+            access = TokenInfo(
+                value = tokens.access,
+                expiresInSeconds = accessTokenExpiration.inWholeSeconds.toULong(),
+            ),
+            refresh = TokenInfo(
+                value = tokens.refresh,
+                expiresInSeconds = refreshTokenExpiration.inWholeSeconds.toULong(),
+            ),
+        )
     }
 
     override suspend fun getRoot(): Response<HelloResponse> =
@@ -52,6 +77,46 @@ class APIImpl(
             health,
             if (health.status) HttpStatusCode.OK else HttpStatusCode.ServiceUnavailable,
         )
+    }
+
+    override suspend fun login(loginData: LoginData): Response<TokenPair> {
+        if (!loginData.validate()) {
+            return Response.Error("Invalid login data", HttpStatusCode.UnprocessableEntity)
+        }
+        val user = storages.user.getByUsernameOrNull(loginData.username) ?: return Response.Error(
+            "Invalid username",
+            HttpStatusCode.Unauthorized,
+        )
+        if (!storages.auth.verifyPassword(user.id, loginData.password)) {
+            return Response.Error("Invalid password", HttpStatusCode.Unauthorized)
+        }
+        return Response.Success(recreateTokenPair(user.id))
+    }
+
+    override suspend fun changePassword(loginData: LoginData): Response<Unit> {
+        if (!loginData.validate()) {
+            return Response.Error("Invalid login data", HttpStatusCode.UnprocessableEntity)
+        }
+        val user = storages.user.getByUsernameOrNull(loginData.username) ?: return Response.Error(
+            "User not found",
+            HttpStatusCode.BadRequest,
+        )
+        storages.auth.setPassword(user.id, loginData.password)
+        return Response.Success(HttpStatusCode.NoContent)
+    }
+
+    override suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair> {
+        val userId = storages.auth.verifyRefreshTokenOrNull(refreshToken.value)
+            ?: return Response.Error(
+                "Invalid refresh token",
+                HttpStatusCode.Unauthorized,
+            )
+        return Response.Success(recreateTokenPair(userId))
+    }
+
+    override suspend fun logoutAll(userId: UserId): Response<Unit> {
+        storages.auth.revokeTokens(userId)
+        return Response.Success(HttpStatusCode.NoContent)
     }
 
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
@@ -114,15 +179,18 @@ class APIImpl(
             .map {
                 it.toScoreboardRow(
                     storages.player.getByIdOrNull(it.playerId)
-                        ?: Player(it.playerId, "Unknown player ${it.playerId}")
+                        ?: Player(it.playerId, "Unknown player ${it.playerId}"),
                 )
             }
             .sortedWith(
                 compareByDescending<ScoreboardRow> { it.totalPointsX100 }
                     .thenByDescending { it.playCount.total }
                     .thenByDescending { it.winCount.total }
-                    .thenBy { it.player.nickname }
+                    .thenBy { it.player.nickname },
             )
         return Response.Success(ResponseList(scoreboardSorted))
     }
+
+    override suspend fun handleAuthentication(token: AccessToken): UserId? =
+        storages.auth.verifyAccessTokenOrNull(token.value)
 }

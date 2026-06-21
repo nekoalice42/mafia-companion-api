@@ -12,6 +12,7 @@ val migrations = listOf(
     V01Init,
     V02AddSeatColumn,
     V03TimestampToTimestampTz,
+    V04AddTokensAndPlayers,
 )
 
 val logger: Logger = LoggerFactory.getLogger("Migrations")
