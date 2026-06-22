@@ -1,6 +1,6 @@
 package me.nekoalice.mafia.api.server.storage.base
 
-import me.nekoalice.mafia.api.dto.models.UserId
+import me.nekoalice.mafia.api.dto.user.UserId
 import me.nekoalice.mafia.api.server.storage.TokenPair
 import kotlin.time.Duration
 import kotlin.time.Instant

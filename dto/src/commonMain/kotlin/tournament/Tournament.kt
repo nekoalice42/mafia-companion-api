@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.tournament
 
 import kotlinx.serialization.Serializable
 import kotlin.time.Instant

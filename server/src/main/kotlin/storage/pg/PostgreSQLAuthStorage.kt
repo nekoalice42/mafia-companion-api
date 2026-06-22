@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.singleOrNull
 import me.nekoalice.mafia.api.dao.AccessTokens
 import me.nekoalice.mafia.api.dao.RefreshTokens
 import me.nekoalice.mafia.api.dao.Users
-import me.nekoalice.mafia.api.dto.models.UserId
+import me.nekoalice.mafia.api.dto.user.UserId
 import me.nekoalice.mafia.api.server.storage.TokenPair
 import me.nekoalice.mafia.api.server.storage.base.AuthStorage
 import me.nekoalice.mafia.api.server.utils.generateToken

@@ -1,7 +1,7 @@
 package me.nekoalice.mafia.api.server.storage.inmemory
 
-import me.nekoalice.mafia.api.dto.models.Tournament
-import me.nekoalice.mafia.api.dto.models.TournamentId
+import me.nekoalice.mafia.api.dto.tournament.Tournament
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
 
 class InMemoryTournamentStorage : TournamentStorage {

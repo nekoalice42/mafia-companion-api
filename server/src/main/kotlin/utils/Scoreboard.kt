@@ -1,7 +1,7 @@
 package me.nekoalice.mafia.api.server.utils
 
-import me.nekoalice.mafia.api.dto.models.NewGameBody
-import me.nekoalice.mafia.api.dto.models.PlayerId
+import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.player.PlayerId
 
 fun calculateScoreboard(games: Iterable<NewGameBody>): List<ScoreboardRowRollingCounter> {
     val playerCounters = mutableMapOf<PlayerId, ScoreboardRowRollingCounter>()

@@ -1,6 +1,8 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.game
 
 import kotlinx.serialization.Serializable
+import me.nekoalice.mafia.api.dto.game.enums.Team
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import kotlin.time.Instant
 
 @Serializable

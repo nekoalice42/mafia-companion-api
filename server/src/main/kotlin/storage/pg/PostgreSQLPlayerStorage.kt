@@ -4,8 +4,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.dao.Players
-import me.nekoalice.mafia.api.dto.models.Player
-import me.nekoalice.mafia.api.dto.models.PlayerId
+import me.nekoalice.mafia.api.dto.player.Player
+import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.server.storage.base.PlayerStorage
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere

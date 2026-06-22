@@ -1,6 +1,8 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.game
 
 import kotlinx.serialization.Serializable
+import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.game.enums.Role
 
 @Serializable
 public data class InGamePlayer(

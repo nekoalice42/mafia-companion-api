@@ -4,13 +4,19 @@ import me.nekoalice.mafia.api.dao.Players
 import me.nekoalice.mafia.api.dao.Tournaments
 import me.nekoalice.mafia.api.dao.Users
 import me.nekoalice.mafia.api.dao.WinnerTeam
-import me.nekoalice.mafia.api.dto.models.*
+import me.nekoalice.mafia.api.dto.player.Player
+import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.game.enums.Team
+import me.nekoalice.mafia.api.dto.tournament.Tournament
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
+import me.nekoalice.mafia.api.dto.user.User
+import me.nekoalice.mafia.api.dto.user.UserId
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import kotlin.uuid.ExperimentalUuidApi
 import me.nekoalice.mafia.api.dao.Role as DaoRole
-import me.nekoalice.mafia.api.dto.models.Role as DtoRole
+import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
 
 internal suspend fun <T> tx(block: suspend R2dbcTransaction.() -> T) = suspendTransaction(
     readOnly = false,

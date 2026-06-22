@@ -1,7 +1,7 @@
 package me.nekoalice.mafia.api.server.storage.inmemory
 
-import me.nekoalice.mafia.api.dto.models.User
-import me.nekoalice.mafia.api.dto.models.UserId
+import me.nekoalice.mafia.api.dto.user.User
+import me.nekoalice.mafia.api.dto.user.UserId
 import me.nekoalice.mafia.api.server.storage.adminUserUuid
 import me.nekoalice.mafia.api.server.storage.base.UserStorage
 

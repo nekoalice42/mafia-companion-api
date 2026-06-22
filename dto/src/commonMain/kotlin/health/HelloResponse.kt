@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.health
 
 import kotlinx.serialization.Serializable
 

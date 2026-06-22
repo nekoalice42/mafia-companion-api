@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.tournament
 
 import kotlinx.serialization.Serializable
 import kotlin.jvm.JvmInline
@@ -6,14 +6,14 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 @JvmInline
-@OptIn(ExperimentalUuidApi::class)
 @Serializable
-public value class PlayerId(public val value: Uuid) {
+@OptIn(ExperimentalUuidApi::class)
+public value class TournamentId(public val value: Uuid) {
     public constructor(value: String) : this(Uuid.parse(value))
 
     override fun toString(): String = value.toString()
 
     public companion object {
-        public fun new(): PlayerId = PlayerId(Uuid.generateV7())
+        public fun new(): TournamentId = TournamentId(Uuid.generateV7())
     }
 }

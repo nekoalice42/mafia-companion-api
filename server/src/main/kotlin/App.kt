@@ -9,7 +9,7 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.resources.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
-import me.nekoalice.mafia.api.dto.models.AccessToken
+import me.nekoalice.mafia.api.dto.auth.AccessToken
 import me.nekoalice.mafia.api.server.storage.StorageProvider
 import me.nekoalice.mafia.api.server.storage.StorageType
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase

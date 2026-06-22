@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.response
 
 import kotlinx.serialization.Serializable
 

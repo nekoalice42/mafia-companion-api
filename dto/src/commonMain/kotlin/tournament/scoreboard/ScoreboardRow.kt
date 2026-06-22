@@ -1,6 +1,7 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.tournament.scoreboard
 
 import kotlinx.serialization.Serializable
+import me.nekoalice.mafia.api.dto.player.Player
 
 @Serializable
 public data class ScoreboardRow(

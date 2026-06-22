@@ -13,7 +13,21 @@ import io.ktor.util.reflect.*
 import io.ktor.utils.io.*
 import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.contracts.resources.*
-import me.nekoalice.mafia.api.dto.models.*
+import me.nekoalice.mafia.api.dto.auth.AccessToken
+import me.nekoalice.mafia.api.dto.response.ErrorResponse
+import me.nekoalice.mafia.api.dto.health.HealthResponse
+import me.nekoalice.mafia.api.dto.health.HelloResponse
+import me.nekoalice.mafia.api.dto.auth.LoginData
+import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.player.Player
+import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.auth.RefreshToken
+import me.nekoalice.mafia.api.dto.response.ResponseList
+import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
+import me.nekoalice.mafia.api.dto.auth.TokenPair
+import me.nekoalice.mafia.api.dto.tournament.Tournament
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
+import me.nekoalice.mafia.api.dto.user.UserId
 import kotlin.uuid.ExperimentalUuidApi
 
 public abstract class BaseAPI(

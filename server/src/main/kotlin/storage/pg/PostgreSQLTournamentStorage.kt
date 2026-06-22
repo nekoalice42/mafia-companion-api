@@ -4,10 +4,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.dao.Tournaments
-import me.nekoalice.mafia.api.dto.models.Tournament
-import me.nekoalice.mafia.api.dto.models.TournamentId
+import me.nekoalice.mafia.api.dto.tournament.Tournament
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
-import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll

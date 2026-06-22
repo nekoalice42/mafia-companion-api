@@ -1,7 +1,7 @@
 package me.nekoalice.mafia.api.contracts.resources
 
 import io.ktor.resources.Resource
-import me.nekoalice.mafia.api.dto.models.TournamentId
+import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import kotlin.uuid.ExperimentalUuidApi
 
 @Resource("/tournament")

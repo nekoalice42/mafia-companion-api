@@ -1,4 +1,4 @@
-package me.nekoalice.mafia.api.dto.models
+package me.nekoalice.mafia.api.dto.game.enums
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
