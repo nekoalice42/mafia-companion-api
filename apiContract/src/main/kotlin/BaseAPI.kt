@@ -31,7 +31,7 @@ import me.nekoalice.mafia.api.dto.user.UserId
 import kotlin.uuid.ExperimentalUuidApi
 
 public abstract class BaseAPI(
-    private val info: APIInfo,
+    public val info: APIInfo,
 ) {
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getHealth(): Response<HealthResponse>

@@ -51,7 +51,7 @@ fun Application.module() {
     install(Resources)
     authentication {
         bearer("app-token") {
-            realm = "Mafia API"
+            realm = api.info.name
             authenticate { api.handleAuthentication(AccessToken(it.token)) }
         }
     }
