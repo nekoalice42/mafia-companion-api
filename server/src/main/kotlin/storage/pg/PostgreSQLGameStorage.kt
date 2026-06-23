@@ -60,7 +60,7 @@ class PostgreSQLGameStorage : GameStorage {
                     )
                 }.toList()
             NewGameBody(
-                tournament = TournamentId(gamesResult[Games.tournamentId]),
+                tournament = TournamentId(gamesResult[Games.tournamentId].value),
                 players = players,
                 winnerTeam = mapDaoWinnerTeam(gamesResult[Games.winnerTeam]),
                 startTime = gamesResult[Games.startedAt],

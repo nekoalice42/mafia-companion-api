@@ -8,9 +8,9 @@ import kotlin.uuid.Uuid
 
 @OptIn(ExperimentalUuidApi::class)
 public object InGamePlayers : CompositeIdTable("in_game_players") {
-    public val gameId: Column<EntityID<Uuid>> = uuid("game_id").references(Games.id).entityId()
-    public val playerId: Column<EntityID<Uuid>> =
-        uuid("player_id").references(Players.id).entityId()
+    public val gameId: Column<EntityID<Uuid>> = reference("game_id", Games)
+    public val playerId: Column<EntityID<Uuid>> = reference("player_id", Players)
+
     public val seat: Column<Int> = integer("seat").check { (it greaterEq 1) and (it lessEq 10) }
     public val role: Column<Role> = enumerationByName<Role>("role")
     public val extraPoints: Column<Int?> = integer("extra_points").nullable()
