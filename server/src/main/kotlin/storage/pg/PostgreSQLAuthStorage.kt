@@ -37,7 +37,7 @@ class PostgreSQLAuthStorage : AuthStorage {
                 .where { Users.id eq id.value }
                 .single()[Users.passwordHash]
         }.let { pwhash ->
-            verifyPasswordSuspend(password, pwhash)
+            if (pwhash != null) verifyPasswordSuspend(password, pwhash) else false
         }
 
     override suspend fun recreateTokenPair(

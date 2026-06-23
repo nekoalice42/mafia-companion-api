@@ -10,7 +10,7 @@ class InMemoryUserStorage : UserStorage {
         UserId(adminUserUuid) to User(
             id = UserId(adminUserUuid),
             username = "admin",
-        )
+        ),
     )
 
     override suspend fun getByIdOrNull(id: UserId): User? =
@@ -18,4 +18,9 @@ class InMemoryUserStorage : UserStorage {
 
     override suspend fun getByUsernameOrNull(username: String): User? =
         users.values.find { it.username == username }
+
+    override suspend fun getByExternalIdOrNull(
+        externalId: String,
+        provider: UserStorage.ExternalUserProvider,
+    ): User? = null  // No external users support here, sorry
 }

@@ -6,4 +6,10 @@ import me.nekoalice.mafia.api.dto.user.UserId
 interface UserStorage {
     suspend fun getByIdOrNull(id: UserId): User?
     suspend fun getByUsernameOrNull(username: String): User?
+    suspend fun getByExternalIdOrNull(externalId: String, provider: ExternalUserProvider): User?
+
+    enum class ExternalUserProvider {
+        Telegram,
+        ;
+    }
 }

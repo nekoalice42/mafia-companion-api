@@ -2,12 +2,18 @@ ktor:
   application:
     modules:
       - me.nekoalice.mafia.api.server.AppKt.module
+      - me.nekoalice.mafia.api.server.AppKt.configureTelegramOidc
   deployment:
     port: 8080
 mafia-api:
   storage:
-    # type: pg
+    type: pg
     postgresql:
       url: ${DATABASE_URL}
       user: ${DATABASE_USER}
       password: ${DATABASE_PASSWORD}
+  telegram-oidc:
+    client_id: ${TELEGRAM_OIDC_CLIENT_ID}
+    client_secret: ${TELEGRAM_OIDC_CLIENT_SECRET}
+    redirect_host: ${TELEGRAM_OIDC_REDIRECT_HOST}
+    state_secret: ${TELEGRAM_OIDC_STATE_SECRET}

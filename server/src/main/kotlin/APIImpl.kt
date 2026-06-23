@@ -1,26 +1,25 @@
 package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
+import io.ktor.server.auth.AuthenticationFailedCause
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
-import me.nekoalice.mafia.api.dto.auth.AccessToken
+import me.nekoalice.mafia.api.dto.auth.*
+import me.nekoalice.mafia.api.dto.game.NewGameBody
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 import me.nekoalice.mafia.api.dto.health.HelloResponse
-import me.nekoalice.mafia.api.dto.auth.LoginData
-import me.nekoalice.mafia.api.dto.game.NewGameBody
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
-import me.nekoalice.mafia.api.dto.auth.RefreshToken
 import me.nekoalice.mafia.api.dto.response.ResponseList
-import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
-import me.nekoalice.mafia.api.dto.auth.TokenInfo
-import me.nekoalice.mafia.api.dto.auth.TokenPair
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
+import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 import me.nekoalice.mafia.api.dto.user.UserId
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
+import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import me.nekoalice.mafia.api.server.utils.calculateScoreboard
+import me.nekoalice.mafia.api.server.utils.parseAndVerifyTelegramToken
 import me.nekoalice.mafia.api.server.validation.validate
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -30,11 +29,12 @@ private val accessTokenExpiration = 30.minutes
 private val refreshTokenExpiration = 7.days
 
 class APIImpl(
-    val storages: StorageProvider,
+    private val storages: StorageProvider,
+    private val telegramOidcClientId: String,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-alpha.4",
+        version = "0.1.0-alpha.5",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = "http://localhost:8080",
         productionUrl = "https://api.mafia.nekoalice.me",
@@ -205,6 +205,33 @@ class APIImpl(
         return Response.Success(ResponseList(scoreboardSorted))
     }
 
+    override suspend fun telegramOauthCallback(token: TelegramIdToken): Response<TokenPair> {
+        val identity = parseAndVerifyTelegramToken(token.value, telegramOidcClientId).let {
+            if (it.isFailure) {
+                return Response.Error(
+                    "Telegram login flow failed",
+                    HttpStatusCode.ServiceUnavailable,
+                )
+            }
+            it.getOrThrow()
+        }
+        val user = storages.user.getByExternalIdOrNull(
+            identity.id.toString(),
+            UserStorage.ExternalUserProvider.Telegram,
+        ) ?: return Response.Error(
+            "No such Telegram user registered (id=${identity.id})",
+            HttpStatusCode.Forbidden,
+        )
+        return Response.Success(recreateTokenPair(user.id))
+    }
+
     override suspend fun handleAuthentication(token: AccessToken): UserId? =
         storages.auth.verifyAccessTokenOrNull(token.value)
+
+    override suspend fun handleTelegramOauthError(
+        cause: AuthenticationFailedCause.Error,
+    ): Response<Nothing> = Response.Error(
+        "Telegram login flow failed: ${cause.message}",
+        HttpStatusCode.ServiceUnavailable,
+    )
 }

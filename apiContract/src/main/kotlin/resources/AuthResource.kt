@@ -12,4 +12,13 @@ public class AuthResource {
         @Resource("/current")
         public class Current(public val parent: Token)
     }
+
+    @Resource("/telegram")
+    public class Telegram(public val parent: AuthResource) {
+        @Resource("/callback")
+        public class OauthCallback(public val parent: Telegram)
+
+        @Resource("/login")
+        public class Login(public val parent: Telegram)
+    }
 }

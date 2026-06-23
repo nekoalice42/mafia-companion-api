@@ -1,5 +1,7 @@
 services:
   server:
+    environment:
+      TELEGRAM_OIDC_REDIRECT_HOST: https://api.mafia.nekoalice.me
     labels:
       traefik.enable: "true"
       traefik.http.routers.mafia-api.rule: "Host(`api.mafia.nekoalice.me`)"

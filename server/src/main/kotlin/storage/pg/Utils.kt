@@ -1,16 +1,14 @@
 package me.nekoalice.mafia.api.server.storage.pg
 
-import me.nekoalice.mafia.api.dao.Players
-import me.nekoalice.mafia.api.dao.Tournaments
-import me.nekoalice.mafia.api.dao.Users
-import me.nekoalice.mafia.api.dao.WinnerTeam
+import me.nekoalice.mafia.api.dao.*
+import me.nekoalice.mafia.api.dto.game.enums.Team
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
-import me.nekoalice.mafia.api.dto.game.enums.Team
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
+import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
@@ -39,6 +37,11 @@ internal fun mapDtoRole(role: DtoRole): DaoRole = when (role) {
     DtoRole.Sheriff -> DaoRole.SHERIFF
     DtoRole.Citizen -> DaoRole.CITIZEN
 }
+
+internal fun mapProvider(provider: UserStorage.ExternalUserProvider): ExternalProvider =
+    when (provider) {
+        UserStorage.ExternalUserProvider.Telegram -> ExternalProvider.TELEGRAM
+    }
 
 internal fun mapDaoWinnerTeam(team: WinnerTeam): Team = when (team) {
     WinnerTeam.MAFIA -> Team.Mafia

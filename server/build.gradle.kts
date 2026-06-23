@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":dao"))
     implementation(project(":dto"))
 
+    implementation(libs.bundles.server.ktor.client)
     implementation(libs.bundles.server.ktor.server)
     implementation(libs.bundles.server.ktor.server.plugins)
     implementation(libs.bundles.server.projectDependencies)

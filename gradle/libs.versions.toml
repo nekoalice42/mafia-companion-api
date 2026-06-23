@@ -20,8 +20,11 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 ktor-server-contentNegotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
@@ -70,6 +73,11 @@ dao-projectDependencies = [
     "exposed-kotlin-datetime",
     "exposed-r2dbc",
 ]
+server-ktor-client = [
+    "ktor-client-core",
+    "ktor-client-cio",
+    "ktor-client-contentNegotiation",
+]
 server-ktor-server = [
     "ktor-server-core",
     "ktor-server-netty",
@@ -78,6 +86,7 @@ server-ktor-server = [
 server-ktor-server-plugins = [
     "ktor-serialization-kotlinx-json",
     "ktor-server-auth",
+    "ktor-server-auth-jwt",
     "ktor-server-contentNegotiation",
     "ktor-server-cors",
     "ktor-server-resources",
