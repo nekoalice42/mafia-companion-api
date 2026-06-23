@@ -27,9 +27,7 @@ object V04AddTokensAndPlayers : Migration {
 
     context(transaction: R2dbcTransaction)
     override suspend fun down() {
-        transaction.execInBatch(
-            Tables.allTables.reversed().flatMap { it.dropStatement() },
-        )
+        SchemaUtils.drop(*Tables.allTables)
     }
 
     @Suppress("unused")
