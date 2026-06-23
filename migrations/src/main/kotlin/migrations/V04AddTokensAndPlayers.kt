@@ -1,8 +1,8 @@
 package me.nekoalice.mafia.api.migrations.migrations
 
+import com.password4j.Argon2Function
 import com.password4j.Password
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.password4j.types.Argon2
 import org.jetbrains.exposed.v1.core.dao.id.IdTable
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
@@ -17,11 +17,10 @@ object V04AddTokensAndPlayers : Migration {
     context(transaction: R2dbcTransaction)
     override suspend fun up() {
         SchemaUtils.create(*Tables.allTables)
-        val passwordHash = hashPassword("D3faultPassw0rd!")
         Tables.Users.insert {
             it[Tables.Users.id] = Uuid.parse("019ee53f-bc60-7000-8000-000000000000")
             it[Tables.Users.username] = "admin"
-            it[Tables.Users.passwordHash] = passwordHash
+            it[Tables.Users.passwordHash] = hashPassword("D3faultPassw0rd!")
         }
     }
 
@@ -56,10 +55,19 @@ object V04AddTokensAndPlayers : Migration {
         val allTables = arrayOf(Users, AccessTokens, RefreshTokens)
     }
 
-    private suspend fun hashPassword(password: String): String = withContext(Dispatchers.Default) {
+    private val argon2Hasher = Argon2Function.getInstance(
+        15360,
+        2,
+        1,
+        32,
+        Argon2.ID,
+        19,
+    )
+
+    @Suppress("SameParameterValue")
+    private fun hashPassword(password: String): String =
         Password.hash(password)
-            .addRandomSalt()
-            .withArgon2()
+            .addRandomSalt(64)
+            .with(argon2Hasher)
             .result
-    }
 }
