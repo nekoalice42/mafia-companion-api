@@ -24,6 +24,7 @@ import me.nekoalice.mafia.api.dto.response.ResponseList
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
+import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
 import kotlin.uuid.ExperimentalUuidApi
 
@@ -33,6 +34,7 @@ public abstract class BaseAPI(
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getHealth(): Response<HealthResponse>
     public abstract suspend fun login(loginData: LoginData): Response<TokenPair>
+    public abstract suspend fun getMe(userId: UserId): Response<User>
     public abstract suspend fun changePassword(loginData: LoginData): Response<Unit>
     public abstract suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair>
     public abstract suspend fun logoutAll(userId: UserId): Response<Unit>
@@ -75,6 +77,20 @@ public abstract class BaseAPI(
                     description = "Invalid credentials"
                 }
                 commonKtorBodyErrorResponses("LoginData")
+            }
+        }
+
+        get<UserResource.Me> {
+            val userId = call.principal<UserId>()!!
+            call.respond(getMe(userId))
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<User>()
+                    }
+                    description = "Logged in user info"
+                }
             }
         }
 

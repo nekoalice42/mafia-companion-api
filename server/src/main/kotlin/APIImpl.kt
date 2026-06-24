@@ -14,6 +14,7 @@ import me.nekoalice.mafia.api.dto.response.ResponseList
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
+import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
@@ -106,6 +107,9 @@ class APIImpl(
         }
         return Response.Success(recreateTokenPair(user.id))
     }
+
+    override suspend fun getMe(userId: UserId): Response<User> =
+        Response.Success(storages.user.getByIdOrNull(userId)!!)
 
     override suspend fun changePassword(loginData: LoginData): Response<Unit> {
         if (!loginData.validate()) {
