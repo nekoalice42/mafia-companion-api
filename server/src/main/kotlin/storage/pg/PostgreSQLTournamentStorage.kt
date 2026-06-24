@@ -11,9 +11,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class PostgreSQLTournamentStorage : TournamentStorage {
     override suspend fun getByIdOrNull(id: TournamentId): Tournament? = readonlyTx {
         Tournaments.selectAll()
@@ -22,10 +20,7 @@ class PostgreSQLTournamentStorage : TournamentStorage {
             .singleOrNull()
     }
 
-    override suspend fun editOrAdd(
-        id: TournamentId,
-        item: Tournament
-    ) {
+    override suspend fun editOrAdd(id: TournamentId, item: Tournament) {
         tx {
             Tournaments.upsert(Tournaments.id) {
                 it[Tournaments.id] = id.value

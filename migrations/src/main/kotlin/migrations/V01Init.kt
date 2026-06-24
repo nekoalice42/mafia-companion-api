@@ -7,7 +7,6 @@ import org.jetbrains.exposed.v1.core.isNull
 import org.jetbrains.exposed.v1.datetime.timestamp
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.SchemaUtils
-import kotlin.uuid.ExperimentalUuidApi
 
 object V01Init : Migration {
     override val version = 1u
@@ -23,7 +22,6 @@ object V01Init : Migration {
     }
 
     @Suppress("unused")
-    @OptIn(ExperimentalUuidApi::class)
     private object Tables {
         object Games : UuidTable("games", uuidVersion = UuidVersion.V7) {
             val tournamentId = uuid("tournament_id").references(Tournaments.id)

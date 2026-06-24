@@ -12,7 +12,6 @@ import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
-import kotlin.uuid.ExperimentalUuidApi
 import me.nekoalice.mafia.api.dao.Role as DaoRole
 import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
 
@@ -55,14 +54,12 @@ internal fun mapDaoRole(role: DaoRole): DtoRole = when (role) {
     DaoRole.CITIZEN -> DtoRole.Citizen
 }
 
-@OptIn(ExperimentalUuidApi::class)
 internal fun playerFromDao(row: ResultRow): Player =
     Player(
         id = PlayerId(row[Players.id].value),
         nickname = row[Players.nickname],
     )
 
-@OptIn(ExperimentalUuidApi::class)
 internal fun tournamentFromDao(row: ResultRow): Tournament =
     Tournament(
         id = TournamentId(row[Tournaments.id].value),

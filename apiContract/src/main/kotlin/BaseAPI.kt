@@ -26,7 +26,6 @@ import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
-import kotlin.uuid.ExperimentalUuidApi
 
 public abstract class BaseAPI(
     public val info: APIInfo,
@@ -201,7 +200,7 @@ public abstract class BaseAPI(
         }
     }
 
-    @OptIn(ExperimentalKtorApi::class, ExperimentalUuidApi::class)
+    @OptIn(ExperimentalKtorApi::class)
     public fun applyPublicRoutesTo(routing: Route): Unit = with(routing) {
         get<OpenAPIJSONResource> {
             val doc = OpenApiDoc(

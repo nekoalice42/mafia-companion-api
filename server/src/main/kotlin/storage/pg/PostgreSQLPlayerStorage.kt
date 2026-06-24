@@ -11,9 +11,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
-import kotlin.uuid.ExperimentalUuidApi
 
-@OptIn(ExperimentalUuidApi::class)
 class PostgreSQLPlayerStorage : PlayerStorage {
     override suspend fun getByIdOrNull(id: PlayerId): Player? = readonlyTx {
         Players.selectAll().where { Players.id eq id.value }.map(::playerFromDao).singleOrNull()

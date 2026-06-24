@@ -3,10 +3,8 @@ package me.nekoalice.mafia.api.dao
 import org.jetbrains.exposed.v1.core.*
 import org.jetbrains.exposed.v1.core.dao.id.CompositeIdTable
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
-import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-@OptIn(ExperimentalUuidApi::class)
 public object InGamePlayers : CompositeIdTable("in_game_players") {
     public val gameId: Column<EntityID<Uuid>> = reference("game_id", Games)
     public val playerId: Column<EntityID<Uuid>> = reference("player_id", Players)
