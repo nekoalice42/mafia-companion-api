@@ -9,7 +9,7 @@ import kotlin.uuid.Uuid
 public object RefreshTokens : IdTable<Uuid>("refresh_tokens") {
     public override val id: Column<EntityID<Uuid>> = reference("user_id", Users)
 
-    public val hash: Column<String> = text("hash", eagerLoading = true)
+    public val hash: Column<String> = text("hash")
     public val expiresAt: Column<Instant> = timestampWithTimeZoneAsInstant("expires_at")
 
     override val primaryKey: PrimaryKey = PrimaryKey(id)

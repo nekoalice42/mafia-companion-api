@@ -12,8 +12,7 @@ public object InGamePlayers : CompositeIdTable("in_game_players") {
     public val seat: Column<Int> = integer("seat").check { (it greaterEq 1) and (it lessEq 10) }
     public val role: Column<Role> = enumerationByName<Role>("role")
     public val extraPoints: Column<Int?> = integer("extra_points").nullable()
-    public val extraPointsDescription: Column<String?> =
-        text("extra_points_description", eagerLoading = true).nullable()
+    public val extraPointsDescription: Column<String?> = text("extra_points_description").nullable()
     public val guessedMafiaCount: Column<Int?> = integer("guessed_mafia_count").nullable()
 
     override val primaryKey: PrimaryKey = PrimaryKey(gameId, playerId)

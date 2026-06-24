@@ -7,7 +7,7 @@ import kotlin.time.toJavaInstant
 import kotlin.time.toKotlinInstant
 
 internal inline fun <reified T : Enum<T>> Table.enumerationByName(name: String) =
-    text(name, eagerLoading = true).transform(wrap = { enumValueOf<T>(it) }, unwrap = { it.name })
+    text(name).transform(wrap = { enumValueOf<T>(it) }, unwrap = { it.name })
 
 internal fun Table.timestampWithTimeZoneAsInstant(name: String) =
     timestampWithTimeZone(name).transform(

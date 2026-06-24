@@ -36,7 +36,7 @@ object V05AddExternalUsers : Migration {
         private object Users : UuidTable("users", uuidVersion = UuidVersion.V7)
 
         object ExternalUsers : CompositeIdTable("external_users") {
-            val externalId = text("external_id", eagerLoading = true).entityId()
+            val externalId = text("external_id").entityId()
             val provider = text("provider").entityId()
 
             val userId = reference("user_id", Users)

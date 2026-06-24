@@ -38,7 +38,7 @@ object V04AddTokensAndPlayers : Migration {
 
         object AccessTokens : IdTable<Uuid>("access_tokens") {
             override val id = uuid("user_id").references(Users.id).entityId()
-            val hash = text("hash", eagerLoading = true)
+            val hash = text("hash")
             val expiresAt = timestampWithTimeZone("expires_at")
 
             override val primaryKey = PrimaryKey(id)
@@ -46,7 +46,7 @@ object V04AddTokensAndPlayers : Migration {
 
         object RefreshTokens : IdTable<Uuid>("refresh_tokens") {
             override val id = uuid("user_id").references(Users.id).entityId()
-            val hash = text("hash", eagerLoading = true)
+            val hash = text("hash")
             val expiresAt = timestampWithTimeZone("expires_at")
 
             override val primaryKey = PrimaryKey(id)
