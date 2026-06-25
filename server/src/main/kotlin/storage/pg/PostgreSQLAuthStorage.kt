@@ -51,13 +51,13 @@ class PostgreSQLAuthStorage : AuthStorage {
             refresh = generateToken(),
         )
         tx {
-            AccessTokens.upsert(AccessTokens.id) {
-                it[AccessTokens.id] = userId.value
+            AccessTokens.upsert(AccessTokens.userId) {
+                it[AccessTokens.userId] = userId.value
                 it[AccessTokens.hash] = hashToken(tokenPair.access)
                 it[AccessTokens.expiresAt] = Clock.System.now() + accessTokenExpiration
             }
-            RefreshTokens.upsert(RefreshTokens.id) {
-                it[RefreshTokens.id] = userId.value
+            RefreshTokens.upsert(RefreshTokens.userId) {
+                it[RefreshTokens.userId] = userId.value
                 it[RefreshTokens.hash] = hashToken(tokenPair.refresh)
                 it[RefreshTokens.expiresAt] = Clock.System.now() + refreshTokenExpiration
             }
@@ -67,26 +67,26 @@ class PostgreSQLAuthStorage : AuthStorage {
 
     override suspend fun verifyAccessTokenOrNull(accessToken: String): UserId? =
         readonlyTx {
-            AccessTokens.select(AccessTokens.id, AccessTokens.expiresAt)
+            AccessTokens.select(AccessTokens.userId, AccessTokens.expiresAt)
                 .where { AccessTokens.hash eq hashToken(accessToken) }
                 .singleOrNull()
         }
             ?.takeIf { it[AccessTokens.expiresAt] > Clock.System.now() }
-            ?.let { UserId(it[AccessTokens.id].value) }
+            ?.let { UserId(it[AccessTokens.userId].value) }
 
     override suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId? =
         readonlyTx {
-            RefreshTokens.select(RefreshTokens.id, RefreshTokens.expiresAt)
+            RefreshTokens.select(RefreshTokens.userId, RefreshTokens.expiresAt)
                 .where { RefreshTokens.hash eq hashToken(refreshToken) }
                 .singleOrNull()
         }
             ?.takeIf { it[RefreshTokens.expiresAt] > Clock.System.now() }
-            ?.let { UserId(it[RefreshTokens.id].value) }
+            ?.let { UserId(it[RefreshTokens.userId].value) }
 
     override suspend fun revokeTokens(userId: UserId) {
         tx {
-            AccessTokens.deleteWhere { AccessTokens.id eq userId.value }
-            RefreshTokens.deleteWhere { RefreshTokens.id eq userId.value }
+            AccessTokens.deleteWhere { AccessTokens.userId eq userId.value }
+            RefreshTokens.deleteWhere { RefreshTokens.userId eq userId.value }
         }
     }
 }

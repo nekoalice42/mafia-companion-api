@@ -3,7 +3,7 @@ package me.nekoalice.mafia.api.migrations.migrations
 import com.password4j.Argon2Function
 import com.password4j.Password
 import com.password4j.types.Argon2
-import org.jetbrains.exposed.v1.core.dao.id.IdTable
+import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 import org.jetbrains.exposed.v1.datetime.timestampWithTimeZone
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
@@ -36,20 +36,20 @@ object V04AddTokensAndPlayers : Migration {
             val passwordHash = text("password_hash")
         }
 
-        object AccessTokens : IdTable<Uuid>("access_tokens") {
-            override val id = uuid("user_id").references(Users.id).entityId()
+        object AccessTokens : Table("access_tokens") {
+            val userId = uuid("user_id").references(Users.id)
             val hash = text("hash")
             val expiresAt = timestampWithTimeZone("expires_at")
 
-            override val primaryKey = PrimaryKey(id)
+            override val primaryKey = PrimaryKey(userId)
         }
 
-        object RefreshTokens : IdTable<Uuid>("refresh_tokens") {
-            override val id = uuid("user_id").references(Users.id).entityId()
+        object RefreshTokens : Table("refresh_tokens") {
+            val userId = uuid("user_id").references(Users.id)
             val hash = text("hash")
             val expiresAt = timestampWithTimeZone("expires_at")
 
-            override val primaryKey = PrimaryKey(id)
+            override val primaryKey = PrimaryKey(userId)
         }
 
         val allTables = arrayOf(Users, AccessTokens, RefreshTokens)
