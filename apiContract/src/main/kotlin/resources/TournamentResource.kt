@@ -4,15 +4,15 @@ import io.ktor.resources.*
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 
 @Resource("/tournament")
-internal class TournamentResource {
+public class TournamentResource {
     @Resource("/{tournament_id}")
-    class ById(
-        val parent: TournamentResource,
-        @Suppress("PropertyName") val tournament_id: TournamentId,
+    public class ById(
+        public val parent: TournamentResource,
+        @Suppress("PropertyName") public val tournament_id: TournamentId,
     ) {
         @Resource("/scoreboard")
-        class Scoreboard(
-            val parent: ById,
+        public class Scoreboard(
+            public val parent: ById,
         )
     }
 }
