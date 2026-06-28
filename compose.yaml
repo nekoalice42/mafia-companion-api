@@ -31,10 +31,6 @@ services:
       DATABASE_URL: postgresql://database/mafia-api
       DATABASE_USER:
       DATABASE_PASSWORD:
-      TELEGRAM_OIDC_CLIENT_ID:
-      TELEGRAM_OIDC_CLIENT_SECRET:
-      TELEGRAM_OIDC_REDIRECT_HOST:
-      TELEGRAM_OIDC_STATE_SECRET:
     depends_on:
       database:
         condition: service_healthy
@@ -50,6 +46,10 @@ services:
       target: server
     environment:
       <<: *db-env
+      TELEGRAM_OIDC_CLIENT_ID:
+      TELEGRAM_OIDC_CLIENT_SECRET:
+      TELEGRAM_OIDC_REDIRECT_HOST:
+      TELEGRAM_OIDC_STATE_SECRET:
     depends_on:
       database:
         condition: service_healthy
