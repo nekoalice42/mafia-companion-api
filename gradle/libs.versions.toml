@@ -69,6 +69,15 @@ migrations-peerDependencies = [
     "logback",
     "postgresql-r2dbc",
 ]
+cleaner-projectDependencies = [
+    "exposed-core",
+    "exposed-kotlin-datetime",
+    "exposed-r2dbc",
+]
+cleaner-peerDependencies = [
+    "logback",
+    "postgresql-r2dbc",
+]
 dao-projectDependencies = [
     "exposed-core",
     "exposed-kotlin-datetime",

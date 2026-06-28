@@ -6,6 +6,23 @@ COPY gradle.properties ./
 COPY gradle ./gradle
 COPY *.gradle.kts ./
 
+FROM builder AS build-migrations
+
+COPY migrations ./migrations
+
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    --mount=type=cache,target=/app/.gradle,sharing=locked \
+    gradle --no-daemon :migrations:installDist
+
+FROM builder AS build-cleaner
+
+COPY dao ./dao
+COPY cleaner ./cleaner
+
+RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
+    --mount=type=cache,target=/app/.gradle,sharing=locked \
+    gradle --no-daemon :cleaner:installDist
+
 FROM builder AS build-server
 
 COPY dto ./dto
@@ -16,14 +33,6 @@ COPY server ./server
 RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     --mount=type=cache,target=/app/.gradle,sharing=locked \
     gradle --no-daemon :server:installDist
-
-FROM builder AS build-migrations
-
-COPY migrations ./migrations
-
-RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
-    --mount=type=cache,target=/app/.gradle,sharing=locked \
-    gradle --no-daemon :migrations:installDist
 
 FROM eclipse-temurin:21-alpine AS base-runtime
 
@@ -39,6 +48,13 @@ COPY --from=build-migrations /app/migrations/build/install/migrations /opt/migra
 
 USER app
 ENTRYPOINT ["/opt/migrations/bin/migrations"]
+
+FROM base-runtime AS cleaner
+
+COPY --from=build-cleaner /app/cleaner/build/install/cleaner /opt/cleaner
+
+USER app
+ENTRYPOINT ["/opt/cleaner/bin/cleaner"]
 
 FROM base-runtime AS server
 

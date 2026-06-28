@@ -39,6 +39,23 @@ services:
         limits:
           memory: 512M
           cpus: "0.5"
+  cleaner:
+    image: "${IMAGE_NAME:-ghcr.io/nekoalice42/mafia-companion-api/cleaner}:${IMAGE_TAG:-dev}"
+    build:
+      context: .
+      target: cleaner
+    environment:
+      <<: *db-env
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
   server:
     image: "${IMAGE_NAME:-ghcr.io/nekoalice42/mafia-companion-api/server}:${IMAGE_TAG:-dev}"
     build:
