@@ -135,7 +135,7 @@ class APIImpl(
     }
 
     override suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair> {
-        val userId = storages.auth.verifyRefreshTokenOrNull(refreshToken.value)
+        val userId = storages.auth.verifyRefreshTokenOrNull(refreshToken.value, Clock.System.now())
             ?: return Response.Error(
                 "Invalid refresh token",
                 HttpStatusCode.Unauthorized,
@@ -247,7 +247,7 @@ class APIImpl(
             currentTime = Clock.System.now(),
             expiration = authCodeExpiration,
         )
-        val clientState = storages.auth.popClientStateOrNull(oauthState)
+        val clientState = storages.auth.popClientStateOrNull(oauthState, Clock.System.now())
         if (clientState == null || clientState.redirectUrl == null) {
             return Response.Success(
                 ExternalAuthChallenge(
@@ -294,7 +294,7 @@ class APIImpl(
     }
 
     override suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair> {
-        val userId = storages.auth.popUserForAuthCodeOrNull(code.code)
+        val userId = storages.auth.popUserForAuthCodeOrNull(code.code, Clock.System.now())
             ?: return Response.Error(
                 "No user found for auth code ${code.code}",
                 HttpStatusCode.BadRequest,
@@ -303,7 +303,7 @@ class APIImpl(
     }
 
     override suspend fun handleAuthentication(token: AccessToken): UserId? =
-        storages.auth.verifyAccessTokenOrNull(token.value)
+        storages.auth.verifyAccessTokenOrNull(token.value, Clock.System.now())
 
     override suspend fun handleNewTelegramOauthState(
         oauthState: String,

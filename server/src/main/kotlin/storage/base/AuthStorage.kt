@@ -15,8 +15,8 @@ interface AuthStorage {
         refreshTokenExpiration: Duration,
     ): TokenPair
 
-    suspend fun verifyAccessTokenOrNull(accessToken: String): UserId?
-    suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId?
+    suspend fun verifyAccessTokenOrNull(accessToken: String, currentTime: Instant): UserId?
+    suspend fun verifyRefreshTokenOrNull(refreshToken: String, currentTime: Instant): UserId?
     suspend fun revokeTokens(userId: UserId)
     suspend fun setClientState(
         state: String,
@@ -24,14 +24,14 @@ interface AuthStorage {
         currentTime: Instant,
         expiration: Duration,
     )
-    suspend fun popClientStateOrNull(state: String): ClientState?
+    suspend fun popClientStateOrNull(state: String, currentTime: Instant): ClientState?
     suspend fun setUserForAuthCode(
         code: String,
         userId: UserId,
         currentTime: Instant,
         expiration: Duration,
     )
-    suspend fun popUserForAuthCodeOrNull(code: String): UserId?
+    suspend fun popUserForAuthCodeOrNull(code: String, currentTime: Instant): UserId?
 
     data class ClientState(
         val redirectUrl: String?,

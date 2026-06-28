@@ -10,13 +10,13 @@ import me.nekoalice.mafia.api.server.utils.generateToken
 import me.nekoalice.mafia.api.server.utils.hashPasswordSuspend
 import me.nekoalice.mafia.api.server.utils.hashToken
 import me.nekoalice.mafia.api.server.utils.verifyPasswordSuspend
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.r2dbc.*
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Instant
 
-// FIXME: `Clock.System.now()` -> `currentTime`
 class PostgreSQLAuthStorage : AuthStorage {
     override suspend fun setPassword(id: UserId, password: String) {
         val hashedPassword = hashPasswordSuspend(password)
@@ -50,33 +50,43 @@ class PostgreSQLAuthStorage : AuthStorage {
             AccessTokens.upsert(AccessTokens.userId) {
                 it[AccessTokens.userId] = userId.value
                 it[AccessTokens.hash] = hashToken(tokenPair.access)
-                it[AccessTokens.expiresAt] = Clock.System.now() + accessTokenExpiration
+                it[AccessTokens.expiresAt] = currentTime + accessTokenExpiration
             }
             RefreshTokens.upsert(RefreshTokens.userId) {
                 it[RefreshTokens.userId] = userId.value
                 it[RefreshTokens.hash] = hashToken(tokenPair.refresh)
-                it[RefreshTokens.expiresAt] = Clock.System.now() + refreshTokenExpiration
+                it[RefreshTokens.expiresAt] = currentTime + refreshTokenExpiration
             }
         }
         return tokenPair
     }
 
-    override suspend fun verifyAccessTokenOrNull(accessToken: String): UserId? =
+    override suspend fun verifyAccessTokenOrNull(
+        accessToken: String,
+        currentTime: Instant,
+    ): UserId? =
         readonlyTx {
-            AccessTokens.select(AccessTokens.userId, AccessTokens.expiresAt)
-                .where { AccessTokens.hash eq hashToken(accessToken) }
+            AccessTokens.select(AccessTokens.userId)
+                .where {
+                    (AccessTokens.hash eq hashToken(accessToken))
+                        .and(AccessTokens.expiresAt greater currentTime)
+                }
                 .singleOrNull()
         }
-            ?.takeIf { it[AccessTokens.expiresAt] > Clock.System.now() }
             ?.let { UserId(it[AccessTokens.userId].value) }
 
-    override suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId? =
+    override suspend fun verifyRefreshTokenOrNull(
+        refreshToken: String,
+        currentTime: Instant,
+    ): UserId? =
         readonlyTx {
-            RefreshTokens.select(RefreshTokens.userId, RefreshTokens.expiresAt)
-                .where { RefreshTokens.hash eq hashToken(refreshToken) }
+            RefreshTokens.select(RefreshTokens.userId)
+                .where {
+                    (RefreshTokens.hash eq hashToken(refreshToken))
+                        .and(RefreshTokens.expiresAt greater currentTime)
+                }
                 .singleOrNull()
         }
-            ?.takeIf { it[RefreshTokens.expiresAt] > Clock.System.now() }
             ?.let { UserId(it[RefreshTokens.userId].value) }
 
     override suspend fun revokeTokens(userId: UserId) {
@@ -102,13 +112,15 @@ class PostgreSQLAuthStorage : AuthStorage {
         }
     }
 
-    override suspend fun popClientStateOrNull(state: String): AuthStorage.ClientState? =
+    override suspend fun popClientStateOrNull(
+        state: String,
+        currentTime: Instant,
+    ): AuthStorage.ClientState? =
         tx {
             ClientStates.deleteReturning {
-                ClientStates.state eq state
+                (ClientStates.state eq state) and (ClientStates.expiresAt greater currentTime)
             }.singleOrNull()
         }
-            ?.takeIf { it[ClientStates.expiresAt] > Clock.System.now() }
             ?.let {
                 AuthStorage.ClientState(
                     redirectUrl = it[ClientStates.redirectUrl],
@@ -131,10 +143,12 @@ class PostgreSQLAuthStorage : AuthStorage {
         }
     }
 
-    override suspend fun popUserForAuthCodeOrNull(code: String): UserId? =
+    override suspend fun popUserForAuthCodeOrNull(code: String, currentTime: Instant): UserId? =
         tx {
-            AuthCodes.deleteReturning { AuthCodes.code eq hashToken(code) }.singleOrNull()
+            AuthCodes.deleteReturning {
+                (AuthCodes.code eq hashToken(code)) and (AuthCodes.expiresAt greater currentTime)
+            }.singleOrNull()
         }
-            ?.takeIf { it[AuthCodes.expiresAt] > Clock.System.now() }
+            ?.takeIf { it[AuthCodes.expiresAt] > currentTime }
             ?.let { UserId(it[AuthCodes.userId].value) }
 }

@@ -5,17 +5,13 @@ import me.nekoalice.mafia.api.server.storage.TokenPair
 import me.nekoalice.mafia.api.server.storage.adminUserDefaultPassword
 import me.nekoalice.mafia.api.server.storage.adminUserUuid
 import me.nekoalice.mafia.api.server.storage.base.AuthStorage
-import me.nekoalice.mafia.api.server.utils.generateToken
-import me.nekoalice.mafia.api.server.utils.hashPassword
-import me.nekoalice.mafia.api.server.utils.hashPasswordSuspend
-import me.nekoalice.mafia.api.server.utils.hashToken
-import me.nekoalice.mafia.api.server.utils.verifyPasswordSuspend
+import me.nekoalice.mafia.api.server.utils.*
 import kotlin.time.Duration
 import kotlin.time.Instant
 
 class InMemoryAuthStorage : AuthStorage {
     private val passwords = mutableMapOf(
-        UserId(adminUserUuid) to hashPassword(adminUserDefaultPassword)
+        UserId(adminUserUuid) to hashPassword(adminUserDefaultPassword),
     )
     private val tokenPairs = mutableMapOf<UserId, TokenPair>()
     private val clientStates = mutableMapOf<String, AuthStorage.ClientState>()
@@ -44,10 +40,16 @@ class InMemoryAuthStorage : AuthStorage {
         return tokenPair
     }
 
-    override suspend fun verifyAccessTokenOrNull(accessToken: String): UserId? =
+    override suspend fun verifyAccessTokenOrNull(
+        accessToken: String,
+        currentTime: Instant,
+    ): UserId? =
         tokenPairs.entries.find { it.value.access == accessToken }?.key
 
-    override suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId? =
+    override suspend fun verifyRefreshTokenOrNull(
+        refreshToken: String,
+        currentTime: Instant,
+    ): UserId? =
         hashToken(refreshToken).let { hashed ->
             tokenPairs.entries.find { it.value.refresh == hashed }?.key
         }
@@ -65,9 +67,10 @@ class InMemoryAuthStorage : AuthStorage {
         clientStates[state] = clientState
     }
 
-    override suspend fun popClientStateOrNull(state: String): AuthStorage.ClientState? {
-        return clientStates.remove(state)
-    }
+    override suspend fun popClientStateOrNull(
+        state: String,
+        currentTime: Instant,
+    ): AuthStorage.ClientState? = clientStates.remove(state)
 
     override suspend fun setUserForAuthCode(
         code: String,
@@ -78,7 +81,6 @@ class InMemoryAuthStorage : AuthStorage {
         userForAuthCode[code] = userId
     }
 
-    override suspend fun popUserForAuthCodeOrNull(code: String): UserId? {
-        return userForAuthCode.remove(code)
-    }
+    override suspend fun popUserForAuthCodeOrNull(code: String, currentTime: Instant): UserId? =
+        userForAuthCode.remove(code)
 }
