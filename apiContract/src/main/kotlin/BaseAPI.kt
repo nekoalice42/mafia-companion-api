@@ -598,8 +598,7 @@ public abstract class BaseAPI(
     ): Response<RT> {
         contract {
             callsInPlace(next, InvocationKind.AT_MOST_ONCE)
-            // TODO: Enable this experimental contract, see https://kotlinlang.org/docs/unused-return-value-checker.html
-            //returnsResultOf(next)
+            returnsResultOf(next)
         }
         val error = Response.Error<RT>(
             "Telegram login flow failed",

@@ -200,6 +200,7 @@ class APIImpl(
     override suspend fun getScoreboard(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>> {
+        @Suppress("RETURN_VALUE_NOT_USED")
         storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
             "Tournament $tournamentId not found",
             HttpStatusCode.NotFound,

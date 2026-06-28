@@ -25,10 +25,12 @@ fun env(key: String): String =
 object MigrationsTable : Table("migrations") {
     val version: Column<UInt> = uinteger("version")
 
+    @IgnorableReturnValue
     suspend fun versionUp(): UInt = updateReturning {
         it[version] = version + 1u
     }.single()[version]
 
+    @IgnorableReturnValue
     suspend fun versionDown(): UInt = updateReturning {
         it[version] = version - 1u
     }.single()[version]

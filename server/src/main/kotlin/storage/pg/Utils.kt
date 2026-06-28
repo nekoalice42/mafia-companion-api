@@ -15,11 +15,13 @@ import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import me.nekoalice.mafia.api.dao.Role as DaoRole
 import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
 
+@IgnorableReturnValue
 internal suspend fun <T> tx(block: suspend R2dbcTransaction.() -> T) = suspendTransaction(
     readOnly = false,
     statement = block,
 )
 
+@IgnorableReturnValue
 internal suspend fun <T> readonlyTx(block: suspend R2dbcTransaction.() -> T) = suspendTransaction(
     readOnly = true,
     statement = block,
