@@ -543,7 +543,7 @@ public abstract class BaseAPI(
             private val typeInfo: TypeInfo?,
         ) : Response<T> {
             public constructor(
-                statusCode: HttpStatusCode = HttpStatusCode.OK,
+                statusCode: HttpStatusCode = HttpStatusCode.NoContent,
             ) : this(null, statusCode, null)
 
             init {

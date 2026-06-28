@@ -57,7 +57,7 @@ class APIImpl(
         val existed = storage.getByIdOrNull(id) != null
         storage.editOrAdd(id, item)
         return when (existed) {
-            true -> Response.Success(HttpStatusCode.NoContent)
+            true -> Response.Success()
             false -> Response.Success(HttpStatusCode.Created)
         }
     }
@@ -131,7 +131,7 @@ class APIImpl(
             HttpStatusCode.BadRequest,
         )
         storages.auth.setPassword(user.id, loginData.password)
-        return Response.Success(HttpStatusCode.NoContent)
+        return Response.Success()
     }
 
     override suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair> {
@@ -145,7 +145,7 @@ class APIImpl(
 
     override suspend fun logoutAll(userId: UserId): Response<Unit> {
         storages.auth.revokeTokens(userId)
-        return Response.Success(HttpStatusCode.NoContent)
+        return Response.Success()
     }
 
     override suspend fun getPlayers(): Response<ResponseList<Player>> =
@@ -161,7 +161,7 @@ class APIImpl(
 
     override suspend fun deletePlayer(playerId: PlayerId): Response<Unit> {
         storages.player.delete(playerId)
-        return Response.Success(HttpStatusCode.NoContent)
+        return Response.Success()
     }
 
     override suspend fun getTournaments(): Response<ResponseList<Tournament>> {
@@ -178,7 +178,7 @@ class APIImpl(
 
     override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
         storages.tournament.delete(tournamentId)
-        return Response.Success(HttpStatusCode.NoContent)
+        return Response.Success()
     }
 
     override suspend fun createGame(game: NewGameBody): Response<Unit> {
