@@ -33,8 +33,8 @@ suspend fun hashPasswordSuspend(password: String): String =
 suspend fun verifyPasswordSuspend(password: String, hash: String): Boolean =
     withContext(Dispatchers.Default) { verifyPassword(password, hash) }
 
-fun generateToken(): String =
-    ByteArray(32).also(random::nextBytes).toHexString()
+fun generateToken(byteLength: Int = 32): String =
+    ByteArray(byteLength).also(random::nextBytes).toHexString()
 
 fun hashToken(token: String): String =
     MessageDigest.getInstance("SHA-256")

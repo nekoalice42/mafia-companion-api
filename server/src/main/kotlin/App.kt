@@ -114,10 +114,18 @@ fun Application.configureTelegramOidc() {
                     key = stateSecret.encodeToByteArray(),
                     timeoutMillis = 5.minutes.inWholeMilliseconds,
                 ),
+                onStateCreated = { call, state ->
+                    api.handleNewTelegramOauthState(
+                        state,
+                        call.request.queryParameters["redirect_url"],
+                        call.request.queryParameters["state"],
+                    )
+                }
             )
             fallback = { cause ->
                 api.handleTelegramOauthError(cause).sendInResponseTo(this)
             }
+
         }
     }
 

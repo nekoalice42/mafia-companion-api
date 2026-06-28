@@ -1,7 +1,9 @@
 package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
-import io.ktor.server.auth.AuthenticationFailedCause
+import io.ktor.server.auth.*
+import kotlinx.html.*
+import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.auth.*
@@ -16,10 +18,13 @@ import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
+import me.nekoalice.mafia.api.server.storage.base.AuthStorage
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import me.nekoalice.mafia.api.server.utils.calculateScoreboard
+import me.nekoalice.mafia.api.server.utils.generateToken
+import me.nekoalice.mafia.api.server.utils.getTelegramLoginSuccessHtml
 import me.nekoalice.mafia.api.server.utils.parseAndVerifyTelegramToken
 import me.nekoalice.mafia.api.server.validation.validate
 import kotlin.time.Clock
@@ -28,6 +33,9 @@ import kotlin.time.Duration.Companion.minutes
 
 private val accessTokenExpiration = 30.minutes
 private val refreshTokenExpiration = 7.days
+private val authCodeExpiration = 10.minutes
+private val clientStateExpiration = 15.minutes
+private val allowedAppRedirectUrlRegex = Regex("""^mafia-api://auth/[^?&=]+$""")
 
 class APIImpl(
     private val storages: StorageProvider,
@@ -35,7 +43,7 @@ class APIImpl(
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-alpha.5",
+        version = "0.1.0-alpha.6",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = "http://localhost:8080",
         productionUrl = "https://api.mafia.nekoalice.me",
@@ -72,6 +80,9 @@ class APIImpl(
             ),
         )
     }
+
+    private fun isRedirectUrlValid(redirectUrl: String): Boolean =
+        allowedAppRedirectUrlRegex.matches(redirectUrl)
 
     override suspend fun getRoot(): Response<HelloResponse> =
         Response.Success(HelloResponse())
@@ -209,7 +220,10 @@ class APIImpl(
         return Response.Success(ResponseList(scoreboardSorted))
     }
 
-    override suspend fun telegramOauthCallback(token: TelegramIdToken): Response<TokenPair> {
+    override suspend fun telegramOauthCallback(
+        token: TelegramIdToken,
+        oauthState: String,
+    ): Response<ExternalAuthChallenge> {
         val identity = parseAndVerifyTelegramToken(token.value, telegramOidcClientId).let {
             if (it.isFailure) {
                 return Response.Error(
@@ -226,11 +240,83 @@ class APIImpl(
             "No such Telegram user registered (id=${identity.id})",
             HttpStatusCode.Forbidden,
         )
-        return Response.Success(recreateTokenPair(user.id))
+        val code = generateToken(4)
+        storages.auth.setUserForAuthCode(
+            code = code,
+            userId = user.id,
+            currentTime = Clock.System.now(),
+            expiration = authCodeExpiration,
+        )
+        val clientState = storages.auth.popClientStateOrNull(oauthState)
+        if (clientState == null || clientState.redirectUrl == null) {
+            return Response.Success(
+                ExternalAuthChallenge(
+                    code = code,
+                    state = clientState?.state,
+                ),
+            )
+        }
+        if (!isRedirectUrlValid(clientState.redirectUrl)) {
+            return Response.Error(
+                "Bad redirect URL",
+                HttpStatusCode.BadRequest,
+            )
+        }
+        val url = with(URLBuilder(clientState.redirectUrl)) {
+            parameters["code"] = code
+            clientState.state?.let { parameters["state"] = it }
+            buildString()
+        }
+        return Response.Redirect(url)
+    }
+
+    override suspend fun telegramOauthCallbackHtml(
+        token: TelegramIdToken,
+        oauthState: String,
+    ): Response<String> {
+        val result = telegramOauthCallback(token, oauthState)
+        // I may have done something like `return result as Response<String>` as the type parameter
+        // of `Response` interface is only used in `Response.Success` class, so the type case
+        // is (kind of) safe, but it's safer to reconstruct the response.
+        if (result !is Response.Success) return when (result) {
+            is Response.Error -> Response.Error(result.message, result.statusCode)
+            is Response.Redirect -> Response.Redirect(result.url)
+        }
+        val response = requireNotNull(result.response)
+        // Copied from [io.ktor.server.html.respondHtml].
+        val text = buildString {
+            append("<!DOCTYPE html>\n")
+            appendHTML().html {
+                getTelegramLoginSuccessHtml(response.code)
+            }
+        }
+        return Response.Success(text)
+    }
+
+    override suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair> {
+        val userId = storages.auth.popUserForAuthCodeOrNull(code.code)
+            ?: return Response.Error(
+                "No user found for auth code ${code.code}",
+                HttpStatusCode.BadRequest,
+            )
+        return Response.Success(recreateTokenPair(userId))
     }
 
     override suspend fun handleAuthentication(token: AccessToken): UserId? =
         storages.auth.verifyAccessTokenOrNull(token.value)
+
+    override suspend fun handleNewTelegramOauthState(
+        oauthState: String,
+        redirectUrl: String?,
+        clientState: String?,
+    ) {
+        storages.auth.setClientState(
+            state = oauthState,
+            clientState = AuthStorage.ClientState(redirectUrl, clientState),
+            currentTime = Clock.System.now(),
+            expiration = clientStateExpiration,
+        )
+    }
 
     override suspend fun handleTelegramOauthError(
         cause: AuthenticationFailedCause.Error,

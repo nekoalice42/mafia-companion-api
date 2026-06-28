@@ -20,5 +20,8 @@ public class AuthResource {
 
         @Resource("/login")
         public class Login(public val parent: Telegram)
+
+        @Resource("/challenge")
+        public class Challenge(public val parent: Telegram)
     }
 }

@@ -1,6 +1,7 @@
 package me.nekoalice.mafia.api.contracts
 
 import io.ktor.http.*
+import io.ktor.http.content.*
 import io.ktor.openapi.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -26,6 +27,9 @@ import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 public abstract class BaseAPI(
     public val info: APIInfo,
@@ -50,9 +54,25 @@ public abstract class BaseAPI(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>>
 
-    public abstract suspend fun telegramOauthCallback(token: TelegramIdToken): Response<TokenPair>
+    public abstract suspend fun telegramOauthCallback(
+        token: TelegramIdToken,
+        oauthState: String,
+    ): Response<ExternalAuthChallenge>
+
+    public abstract suspend fun telegramOauthCallbackHtml(
+        token: TelegramIdToken,
+        oauthState: String,
+    ): Response<String>
+
+    public abstract suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair>
 
     public abstract suspend fun handleAuthentication(token: AccessToken): UserId?
+    public abstract suspend fun handleNewTelegramOauthState(
+        oauthState: String,
+        redirectUrl: String?,
+        clientState: String?,
+    )
+
     public abstract suspend fun handleTelegramOauthError(
         cause: AuthenticationFailedCause.Error,
     ): Response<Nothing>
@@ -328,6 +348,25 @@ public abstract class BaseAPI(
             }
         }
 
+        post<AuthResource.Telegram.Challenge, ExternalAuthCode> { _, code ->
+            call.respond(finishTelegramChallenge(code))
+        }.describe {
+            responses {
+                HttpStatusCode.OK {
+                    content {
+                        schema = jsonSchema<TokenPair>()
+                    }
+                    description = "Login successful"
+                }
+                HttpStatusCode.BadRequest {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "No user found for auth code"
+                }
+            }
+        }
+
         get<PlayerResource> {
             call.respond(getPlayers())
         }.describe {
@@ -440,27 +479,34 @@ public abstract class BaseAPI(
             description = "Start Telegram login flow"
         }
 
-        get<AuthResource.Telegram.OauthCallback> {
-            call.principal<OAuthAccessTokenResponse.OAuth2>()?.let { principal ->
-                principal.extraParameters["id_token"]?.let { token ->
-                    call.respond(telegramOauthCallback(TelegramIdToken(token)))
-                    return@get
+        resource<AuthResource.Telegram.OauthCallback> {
+            accept(ContentType.Text.Html) {
+                get {
+                    call.respondHtml(telegramOauthCommon(BaseAPI::telegramOauthCallbackHtml))
                 }
             }
-            // If principal is null or id_token is missing
-            call.respond(
-                Response.Error<Unit>(
-                    "Telegram login flow failed",
-                    HttpStatusCode.ServiceUnavailable,
-                ),
-            )
+            get {
+                call.respond(telegramOauthCommon(BaseAPI::telegramOauthCallback))
+            }
         }.describe {
             responses {
                 HttpStatusCode.OK {
+                    ContentType.Text.Html {
+                        schema = jsonSchema<String>()
+                    }
                     content {
-                        schema = jsonSchema<TokenPair>()
+                        schema = jsonSchema<ExternalAuthChallenge>()
                     }
                     description = "Login successful"
+                }
+                HttpStatusCode.Found {
+                    description = "Login successful, redirecting to provided redirect_url"
+                }
+                HttpStatusCode.BadRequest {
+                    content {
+                        schema = jsonSchema<ErrorResponse>()
+                    }
+                    description = "Bad redirect URL"
                 }
                 HttpStatusCode.Forbidden {
                     content {
@@ -529,6 +575,13 @@ public abstract class BaseAPI(
                 call.respond(statusCode, ErrorResponse(message))
         }
 
+        public data class Redirect<Unused : Any>(
+            val url: String,
+        ) : Response<Unused> {
+            override suspend fun sendInResponseTo(call: ApplicationCall): Unit =
+                call.respondRedirect(url)
+        }
+
         public suspend fun sendInResponseTo(call: ApplicationCall)
 
         public companion object {
@@ -537,6 +590,25 @@ public abstract class BaseAPI(
                 statusCode: HttpStatusCode = HttpStatusCode.OK,
             ): Success<T> = Success(response, statusCode, typeInfo<T>())
         }
+    }
+
+    @OptIn(ExperimentalContracts::class)
+    private suspend fun <RT : Any> RoutingContext.telegramOauthCommon(
+        next: suspend BaseAPI.(TelegramIdToken, String) -> Response<RT>,
+    ): Response<RT> {
+        contract {
+            callsInPlace(next, InvocationKind.AT_MOST_ONCE)
+            // TODO: Enable this experimental contract, see https://kotlinlang.org/docs/unused-return-value-checker.html
+            //returnsResultOf(next)
+        }
+        val error = Response.Error<RT>(
+            "Telegram login flow failed",
+            HttpStatusCode.ServiceUnavailable,
+        )
+        val principal = call.principal<OAuthAccessTokenResponse.OAuth2>() ?: return error
+        val token = principal.extraParameters["id_token"] ?: return error
+        val state = principal.state ?: return error
+        return next(TelegramIdToken(token), state)
     }
 
     private companion object {
@@ -548,6 +620,18 @@ public abstract class BaseAPI(
 
 private suspend fun ApplicationCall.respond(response: BaseAPI.Response<*>) =
     response.sendInResponseTo(this)
+
+private suspend fun ApplicationCall.respondHtml(response: BaseAPI.Response<String>) =
+    if (response is BaseAPI.Response.Success && response.response != null)
+        respond(
+            TextContent(
+                response.response,
+                ContentType.Text.Html.withCharset(Charsets.UTF_8),
+                response.statusCode,
+            ),
+        )
+    else
+        response.sendInResponseTo(this)
 
 private fun Responses.Builder.commonPutResponses(what: String) {
     HttpStatusCode.Created {

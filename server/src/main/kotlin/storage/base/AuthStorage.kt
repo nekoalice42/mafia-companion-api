@@ -18,4 +18,23 @@ interface AuthStorage {
     suspend fun verifyAccessTokenOrNull(accessToken: String): UserId?
     suspend fun verifyRefreshTokenOrNull(refreshToken: String): UserId?
     suspend fun revokeTokens(userId: UserId)
+    suspend fun setClientState(
+        state: String,
+        clientState: ClientState,
+        currentTime: Instant,
+        expiration: Duration,
+    )
+    suspend fun popClientStateOrNull(state: String): ClientState?
+    suspend fun setUserForAuthCode(
+        code: String,
+        userId: UserId,
+        currentTime: Instant,
+        expiration: Duration,
+    )
+    suspend fun popUserForAuthCodeOrNull(code: String): UserId?
+
+    data class ClientState(
+        val redirectUrl: String?,
+        val state: String?,
+    )
 }

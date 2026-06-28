@@ -18,6 +18,8 @@ class InMemoryAuthStorage : AuthStorage {
         UserId(adminUserUuid) to hashPassword(adminUserDefaultPassword)
     )
     private val tokenPairs = mutableMapOf<UserId, TokenPair>()
+    private val clientStates = mutableMapOf<String, AuthStorage.ClientState>()
+    private val userForAuthCode = mutableMapOf<String, UserId>()
 
     override suspend fun setPassword(id: UserId, password: String) {
         passwords[id] = hashPasswordSuspend(password)
@@ -52,5 +54,31 @@ class InMemoryAuthStorage : AuthStorage {
 
     override suspend fun revokeTokens(userId: UserId) {
         tokenPairs.remove(userId)
+    }
+
+    override suspend fun setClientState(
+        state: String,
+        clientState: AuthStorage.ClientState,
+        currentTime: Instant,
+        expiration: Duration,
+    ) {
+        clientStates[state] = clientState
+    }
+
+    override suspend fun popClientStateOrNull(state: String): AuthStorage.ClientState? {
+        return clientStates.remove(state)
+    }
+
+    override suspend fun setUserForAuthCode(
+        code: String,
+        userId: UserId,
+        currentTime: Instant,
+        expiration: Duration,
+    ) {
+        userForAuthCode[code] = userId
+    }
+
+    override suspend fun popUserForAuthCodeOrNull(code: String): UserId? {
+        return userForAuthCode.remove(code)
     }
 }
