@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM gradle:8.14-alpine AS builder
+FROM gradle:9.6-jdk21-alpine AS builder
 
 WORKDIR /app
 COPY gradle.properties ./
@@ -45,6 +45,7 @@ CMD []
 FROM base-runtime AS migrations
 
 COPY --from=build-migrations /app/migrations/build/install/migrations /opt/migrations
+RUN chmod -R a+rX /opt/migrations
 
 USER app
 ENTRYPOINT ["/opt/migrations/bin/migrations"]
@@ -52,6 +53,7 @@ ENTRYPOINT ["/opt/migrations/bin/migrations"]
 FROM base-runtime AS cleaner
 
 COPY --from=build-cleaner /app/cleaner/build/install/cleaner /opt/cleaner
+RUN chmod -R a+rX /opt/cleaner
 
 USER app
 ENTRYPOINT ["/opt/cleaner/bin/cleaner"]
@@ -62,6 +64,7 @@ RUN --mount=type=cache,target=/var/cache/apk,sharing=locked \
     apk update \
     && apk add curl
 COPY --from=build-server /app/server/build/install/server /opt/server
+RUN chmod -R a+rX /opt/server
 
 EXPOSE 8080
 USER app

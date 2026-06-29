@@ -10,12 +10,17 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
 }
 
-// Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
-include(":apiContract")
-include(":cleaner")
-include(":dto")
-include(":dao")
-include(":migrations")
-include(":server")
+private val projects = arrayOf(
+    ":apiContract",
+    ":cleaner",
+    ":dto",
+    ":dao",
+    ":migrations",
+    ":server",
+)
+
+include(*projects)
+// https://docs.gradle.org/current/userguide/multi_project_builds.html#include_existing_projects_only
+projects.forEach { project(it).projectDir.mkdirs() }
 
 rootProject.name = "mafia-companion-api"
