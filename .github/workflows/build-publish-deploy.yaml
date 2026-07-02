@@ -19,6 +19,19 @@ on:
       - 'Dockerfile'
       - 'gradle.properties'
   workflow_dispatch:
+    inputs:
+      server_tag:
+        description: 'Tag to use for the server image'
+        required: false
+        default: 'latest'
+      migrations_tag:
+        description: 'Tag to use for the migrations image'
+        required: false
+        default: 'latest'
+      cleaner_tag:
+        description: 'Tag to use for the cleaner image'
+        required: false
+        default: 'latest'
 
 permissions:
   contents: read
@@ -30,6 +43,7 @@ concurrency:
 jobs:
   detect-changes:
     runs-on: ubuntu-latest
+    if: "github.event_name != 'workflow_dispatch'"
     outputs:
       server_changed: ${{ steps.changed-files.outputs.server_any_changed }}
       migrations_changed: ${{ steps.changed-files.outputs.migrations_any_changed }}
@@ -83,7 +97,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: needs.detect-changes.outputs.server_changed == 'true'
+    if: success() && needs.detect-changes.outputs.server_changed == 'true'
     uses: ./.github/workflows/build.yaml
     with:
       image_suffix: server
@@ -95,7 +109,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: needs.detect-changes.outputs.migrations_changed == 'true'
+    if: success() && needs.detect-changes.outputs.migrations_changed == 'true'
     uses: ./.github/workflows/build.yaml
     with:
       image_suffix: migrations
@@ -107,7 +121,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: needs.detect-changes.outputs.cleaner_changed == 'true'
+    if: success() && needs.detect-changes.outputs.cleaner_changed == 'true'
     uses: ./.github/workflows/build.yaml
     with:
       image_suffix: cleaner
@@ -126,7 +140,8 @@ jobs:
       !cancelled()
       && !failure()
       && (
-        needs.build-server.result == 'success'
+        github.event_name == 'workflow_dispatch'
+        || needs.build-server.result == 'success'
         || needs.build-migrations.result == 'success'
         || needs.build-cleaner.result == 'success'
         || needs.detect-changes.outputs.deploy_changed == 'true'
@@ -164,11 +179,11 @@ jobs:
           TELEGRAM_OIDC_STATE_SECRET: ${{ secrets.TELEGRAM_OIDC_STATE_SECRET }}
           DOCKER_HOST: ssh://${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }}
           DOCKER_IMAGE_NAME_MIGRATIONS: ghcr.io/${{ github.repository }}/migrations
-          DOCKER_IMAGE_TAG_MIGRATIONS: latest
+          DOCKER_IMAGE_TAG_MIGRATIONS: ${{ inputs.migrations_tag || 'latest' }}
           DOCKER_IMAGE_NAME_CLEANER: ghcr.io/${{ github.repository }}/cleaner
-          DOCKER_IMAGE_TAG_CLEANER: latest
+          DOCKER_IMAGE_TAG_CLEANER: ${{ inputs.cleaner_tag || 'latest' }}
           DOCKER_IMAGE_NAME_SERVER: ghcr.io/${{ github.repository }}/server
-          DOCKER_IMAGE_TAG_SERVER: latest
+          DOCKER_IMAGE_TAG_SERVER: ${{ inputs.server_tag || 'latest' }}
         run: |
           docker compose \
             -f compose.yaml \
