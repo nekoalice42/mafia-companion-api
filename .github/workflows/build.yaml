@@ -1,0 +1,56 @@
+on:
+  workflow_call:
+    inputs:
+      image_suffix:
+        type: string
+        required: true
+        description: Suffix for the Docker image name
+      dockerfile_target:
+        type: string
+        required: true
+        description: Target for the Dockerfile
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+        description: GitHub token for Docker login
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to the Docker registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: docker-meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ inputs.image_suffix }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          target: ${{ inputs.dockerfile_target }}
+          push: true
+          tags: ${{ steps.docker-meta.outputs.tags }}
+          labels: ${{ steps.docker-meta.outputs.labels }}
+          annotations: ${{ steps.docker-meta.outputs.annotations }}
+          cache-from: type=gha,scope=${{ inputs.dockerfile_target }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.dockerfile_target }}

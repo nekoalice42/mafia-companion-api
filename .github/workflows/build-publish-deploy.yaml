@@ -1,0 +1,157 @@
+name: Build, publish and deploy images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/build-publish-deploy.yaml'
+      - 'apiContract/**'
+      - 'cleaner/**'
+      - 'dao/**'
+      - 'dto/**'
+      - 'gradle/libs.versions.toml'
+      - 'migrations/**'
+      - 'server/**'
+      - '*.gradle.kts'
+      - 'Dockerfile'
+      - 'gradle.properties'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      server_changed: ${{ steps.changed-files.outputs.server_any_changed }}
+      migrations_changed: ${{ steps.changed-files.outputs.migrations_any_changed }}
+      cleaner_changed: ${{ steps.changed-files.outputs.cleaner_any_changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v47.0.6
+        with:
+          # language=yaml
+          files_yaml: |
+            server:
+              - 'apiContract/**'
+              - 'dao/**'
+              - 'dto/**'
+              - 'gradle/libs.versions.toml'
+              - 'server/**'
+              - '*.gradle.kts'
+              - 'Dockerfile'
+              - 'gradle.properties'
+            migrations:
+              - 'gradle/libs.versions.toml'
+              - 'migrations/**'
+              - '*.gradle.kts'
+              - 'Dockerfile'
+              - 'gradle.properties'
+            cleaner:
+              - 'cleaner/**'
+              - 'dao/**'
+              - 'gradle/libs.versions.toml'
+              - '*.gradle.kts'
+              - 'Dockerfile'
+              - 'gradle.properties'
+
+  build-server:
+    needs:
+      - detect-changes
+    permissions:
+      contents: read
+      packages: write
+    if: needs.detect-changes.outputs.server_changed == 'true'
+    uses: ./.github/workflows/build.yaml
+    with:
+      image_suffix: server
+      dockerfile_target: server
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-migrations:
+    needs:
+      - detect-changes
+    permissions:
+      contents: read
+      packages: write
+    if: needs.detect-changes.outputs.migrations_changed == 'true'
+    uses: ./.github/workflows/build.yaml
+    with:
+      image_suffix: migrations
+      dockerfile_target: migrations
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-cleaner:
+    needs:
+      - detect-changes
+    permissions:
+      contents: read
+      packages: write
+    if: needs.detect-changes.outputs.cleaner_changed == 'true'
+    uses: ./.github/workflows/build.yaml
+    with:
+      image_suffix: cleaner
+      dockerfile_target: cleaner
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs:
+      - build-server
+      - build-migrations
+      - build-cleaner
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    if: "!cancelled() && !failure() && contains(needs.*.result, 'success')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          ping: ${{ secrets.TAILSCALE_DEPLOY_HOST }}
+
+      - name: Deploy
+        env:
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          TELEGRAM_OIDC_CLIENT_ID: ${{ secrets.TELEGRAM_OIDC_CLIENT_ID }}
+          TELEGRAM_OIDC_CLIENT_SECRET: ${{ secrets.TELEGRAM_OIDC_CLIENT_SECRET }}
+          TELEGRAM_OIDC_STATE_SECRET: ${{ secrets.TELEGRAM_OIDC_STATE_SECRET }}
+          DOCKER_HOST: ssh://${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }}
+          DOCKER_IMAGE_NAME_MIGRATIONS: ghcr.io/${{ github.repository }}/migrations
+          DOCKER_IMAGE_TAG_MIGRATIONS: latest
+          DOCKER_IMAGE_NAME_CLEANER: ghcr.io/${{ github.repository }}/cleaner
+          DOCKER_IMAGE_TAG_CLEANER: latest
+          DOCKER_IMAGE_NAME_SERVER: ghcr.io/${{ github.repository }}/server
+          DOCKER_IMAGE_TAG_SERVER: latest
+        run: |
+          docker compose \
+            -f compose.yaml \
+            -f traefik.compose.yaml \
+            up \
+            cleaner \
+            server \
+            --pull always \
+            --detach \
+            --no-build \
+            --wait \
+            --wait-timeout 300
