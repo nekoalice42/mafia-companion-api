@@ -23,10 +23,7 @@ services:
       timeout: 5s
       retries: 3
   migrations:
-    image: "${DOCKER_IMAGE_NAME_MIGRATIONS:-ghcr.io/nekoalice42/mafia-companion-api/migrations}:${DOCKER_IMAGE_TAG_MIGRATIONS:-dev}"
-    build:
-      context: .
-      target: migrations
+    image: "${DOCKER_IMAGE_NAME_MIGRATIONS:-ghcr.io/nekoalice42/mafia-companion-api/migrations}:${DOCKER_IMAGE_TAG_MIGRATIONS:-latest}"
     environment: &db-env
       DATABASE_URL: postgresql://database/mafia-api
       DATABASE_USER:
@@ -40,10 +37,7 @@ services:
           memory: 512M
           cpus: "0.5"
   cleaner:
-    image: "${DOCKER_IMAGE_NAME_CLEANER:-ghcr.io/nekoalice42/mafia-companion-api/cleaner}:${DOCKER_IMAGE_TAG_CLEANER:-dev}"
-    build:
-      context: .
-      target: cleaner
+    image: "${DOCKER_IMAGE_NAME_CLEANER:-ghcr.io/nekoalice42/mafia-companion-api/cleaner}:${DOCKER_IMAGE_TAG_CLEANER:-latest}"
     environment:
       <<: *db-env
     depends_on:
@@ -57,10 +51,7 @@ services:
           memory: 512M
           cpus: "0.5"
   server:
-    image: "${DOCKER_IMAGE_NAME_SERVER:-ghcr.io/nekoalice42/mafia-companion-api/server}:${DOCKER_IMAGE_TAG_SERVER:-dev}"
-    build:
-      context: .
-      target: server
+    image: "${DOCKER_IMAGE_NAME_SERVER:-ghcr.io/nekoalice42/mafia-companion-api/server}:${DOCKER_IMAGE_TAG_SERVER:-latest}"
     environment:
       <<: *db-env
       TELEGRAM_OIDC_CLIENT_ID:
