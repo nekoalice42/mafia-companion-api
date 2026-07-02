@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/build.yaml'
       - '.github/workflows/build-publish-deploy.yaml'
       - 'apiContract/**'
       - 'cleaner/**'
@@ -14,6 +15,7 @@ on:
       - 'migrations/**'
       - 'server/**'
       - '*.gradle.kts'
+      - '*compose.yaml'
       - 'Dockerfile'
       - 'gradle.properties'
   workflow_dispatch:
@@ -44,6 +46,8 @@ jobs:
           # language=yaml
           files_yaml: |
             server:
+              - '.github/workflows/build.yaml'
+              - '.github/workflows/build-publish-deploy.yaml'
               - 'apiContract/**'
               - 'dao/**'
               - 'dto/**'
@@ -53,12 +57,16 @@ jobs:
               - 'Dockerfile'
               - 'gradle.properties'
             migrations:
+              - '.github/workflows/build.yaml'
+              - '.github/workflows/build-publish-deploy.yaml'
               - 'gradle/libs.versions.toml'
               - 'migrations/**'
               - '*.gradle.kts'
               - 'Dockerfile'
               - 'gradle.properties'
             cleaner:
+              - '.github/workflows/build.yaml'
+              - '.github/workflows/build-publish-deploy.yaml'
               - 'cleaner/**'
               - 'dao/**'
               - 'gradle/libs.versions.toml'
