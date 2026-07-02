@@ -77,8 +77,6 @@ jobs:
     with:
       image_suffix: server
       dockerfile_target: server
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-migrations:
     needs:
@@ -91,8 +89,6 @@ jobs:
     with:
       image_suffix: migrations
       dockerfile_target: migrations
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-cleaner:
     needs:
@@ -105,8 +101,6 @@ jobs:
     with:
       image_suffix: cleaner
       dockerfile_target: cleaner
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs:

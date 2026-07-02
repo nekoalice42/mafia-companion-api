@@ -9,10 +9,6 @@ on:
         type: string
         required: true
         description: Target for the Dockerfile
-    secrets:
-      GITHUB_TOKEN:
-        required: true
-        description: GitHub token for Docker login
 
 jobs:
   build:
