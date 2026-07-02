@@ -139,7 +139,11 @@ jobs:
           ping: ${{ secrets.TAILSCALE_DEPLOY_HOST }}
 
       - name: Test SSH connection to deploy host
+        env:
+          TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS: ${{ secrets.TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS }}
         run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS" >>~/.ssh/known_hosts
           ssh -v \
             -o ConnectTimeout=30 \
             -T \
