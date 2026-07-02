@@ -9,6 +9,7 @@ on:
       - '.github/workflows/build-publish-deploy.yaml'
       - 'apiContract/**'
       - 'cleaner/**'
+      - 'compose.yaml.d/**'
       - 'dao/**'
       - 'dto/**'
       - 'gradle/libs.versions.toml'
@@ -89,6 +90,7 @@ jobs:
               - 'Dockerfile'
               - 'gradle.properties'
             deploy:
+              - 'compose.yaml.d/**'
               - '*compose.yaml'
 
   build-server:
@@ -187,7 +189,7 @@ jobs:
         run: |
           docker compose \
             -f compose.yaml \
-            -f traefik.compose.yaml \
+            -f compose.yaml.d/traefik.yaml \
             up \
             cleaner \
             server \
