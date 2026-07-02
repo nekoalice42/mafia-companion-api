@@ -23,7 +23,7 @@ services:
       timeout: 5s
       retries: 3
   migrations:
-    image: "${IMAGE_NAME:-ghcr.io/nekoalice42/mafia-companion-api/migrations}:${IMAGE_TAG:-dev}"
+    image: "${DOCKER_IMAGE_NAME_MIGRATIONS:-ghcr.io/nekoalice42/mafia-companion-api/migrations}:${DOCKER_IMAGE_TAG_MIGRATIONS:-dev}"
     build:
       context: .
       target: migrations
@@ -40,7 +40,7 @@ services:
           memory: 512M
           cpus: "0.5"
   cleaner:
-    image: "${IMAGE_NAME:-ghcr.io/nekoalice42/mafia-companion-api/cleaner}:${IMAGE_TAG:-dev}"
+    image: "${DOCKER_IMAGE_NAME_CLEANER:-ghcr.io/nekoalice42/mafia-companion-api/cleaner}:${DOCKER_IMAGE_TAG_CLEANER:-dev}"
     build:
       context: .
       target: cleaner
@@ -57,7 +57,7 @@ services:
           memory: 512M
           cpus: "0.5"
   server:
-    image: "${IMAGE_NAME:-ghcr.io/nekoalice42/mafia-companion-api/server}:${IMAGE_TAG:-dev}"
+    image: "${DOCKER_IMAGE_NAME_SERVER:-ghcr.io/nekoalice42/mafia-companion-api/server}:${DOCKER_IMAGE_TAG_SERVER:-dev}"
     build:
       context: .
       target: server
