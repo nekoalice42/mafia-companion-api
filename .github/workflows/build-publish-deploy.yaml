@@ -34,6 +34,7 @@ jobs:
       server_changed: ${{ steps.changed-files.outputs.server_any_changed }}
       migrations_changed: ${{ steps.changed-files.outputs.migrations_any_changed }}
       cleaner_changed: ${{ steps.changed-files.outputs.cleaner_any_changed }}
+      deploy_changed: ${{ steps.changed-files.outputs.deploy_any_changed }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -73,6 +74,8 @@ jobs:
               - '*.gradle.kts'
               - 'Dockerfile'
               - 'gradle.properties'
+            deploy:
+              - '*compose.yaml'
 
   build-server:
     needs:
@@ -112,6 +115,7 @@ jobs:
 
   deploy:
     needs:
+      - detect-changes
       - build-server
       - build-migrations
       - build-cleaner
@@ -125,6 +129,7 @@ jobs:
         needs.build-server.result == 'success'
         || needs.build-migrations.result == 'success'
         || needs.build-cleaner.result == 'success'
+        || needs.detect-changes.outputs.deploy_changed == 'true'
       )
     steps:
       - name: Checkout
