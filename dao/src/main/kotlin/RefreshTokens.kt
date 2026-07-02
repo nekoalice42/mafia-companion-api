@@ -7,10 +7,10 @@ import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
 public object RefreshTokens : Table("refresh_tokens") {
-    public val userId: Column<EntityID<Uuid>> = reference("user_id", Users)
-
     public val hash: Column<String> = text("hash")
+
+    public val userId: Column<EntityID<Uuid>> = reference("user_id", Users)
     public val expiresAt: Column<Instant> = timestampWithTimeZoneAsInstant("expires_at")
 
-    override val primaryKey: PrimaryKey = PrimaryKey(userId)
+    override val primaryKey: PrimaryKey = PrimaryKey(hash)
 }

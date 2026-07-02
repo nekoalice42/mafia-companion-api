@@ -13,7 +13,7 @@ class InMemoryAuthStorage : AuthStorage {
     private val passwords = mutableMapOf(
         UserId(adminUserUuid) to hashPassword(adminUserDefaultPassword),
     )
-    private val tokenPairs = mutableMapOf<UserId, TokenPair>()
+    private val tokenPairs = mutableListOf<HashedTokenPairWithUser>()
     private val clientStates = mutableMapOf<String, AuthStorage.ClientState>()
     private val userForAuthCode = mutableMapOf<String, UserId>()
 
@@ -24,7 +24,7 @@ class InMemoryAuthStorage : AuthStorage {
     override suspend fun verifyPassword(id: UserId, password: String): Boolean =
         passwords[id]?.let { verifyPasswordSuspend(password, it) } ?: false
 
-    override suspend fun recreateTokenPair(
+    override suspend fun createTokenPair(
         userId: UserId,
         currentTime: Instant,
         accessTokenExpiration: Duration,
@@ -34,8 +34,11 @@ class InMemoryAuthStorage : AuthStorage {
             access = generateToken(),
             refresh = generateToken(),
         )
-        tokenPairs[userId] = tokenPair.copy(
-            refresh = hashToken(tokenPair.refresh),
+        tokenPairs.add(
+            HashedTokenPairWithUser(
+                tokenPair = tokenPair,
+                userId = userId,
+            ),
         )
         return tokenPair
     }
@@ -44,18 +47,20 @@ class InMemoryAuthStorage : AuthStorage {
         accessToken: String,
         currentTime: Instant,
     ): UserId? =
-        tokenPairs.entries.find { it.value.access == accessToken }?.key
+        tokenPairs.find { it.checkAccessToken(accessToken) }?.userId
 
     override suspend fun verifyRefreshTokenOrNull(
         refreshToken: String,
         currentTime: Instant,
     ): UserId? =
-        hashToken(refreshToken).let { hashed ->
-            tokenPairs.entries.find { it.value.refresh == hashed }?.key
-        }
+        tokenPairs.find { it.checkRefreshToken(refreshToken) }?.userId
+
+    override suspend fun revokeRefreshToken(refreshToken: String) {
+        tokenPairs.removeAll { it.checkRefreshToken(refreshToken) }
+    }
 
     override suspend fun revokeTokens(userId: UserId) {
-        tokenPairs.remove(userId)
+        tokenPairs.removeAll { it.userId == userId }
     }
 
     override suspend fun setClientState(
@@ -83,4 +88,22 @@ class InMemoryAuthStorage : AuthStorage {
 
     override suspend fun popUserForAuthCodeOrNull(code: String, currentTime: Instant): UserId? =
         userForAuthCode.remove(code)
+
+    private data class HashedTokenPairWithUser(
+        val access: String,
+        val refresh: String,
+        val userId: UserId,
+    ) {
+        constructor(tokenPair: TokenPair, userId: UserId) : this(
+            access = hashToken(tokenPair.access),
+            refresh = hashToken(tokenPair.refresh),
+            userId = userId,
+        )
+
+        fun checkAccessToken(accessToken: String): Boolean =
+            access == hashToken(accessToken)
+
+        fun checkRefreshToken(refreshToken: String): Boolean =
+            refresh == hashToken(refreshToken)
+    }
 }

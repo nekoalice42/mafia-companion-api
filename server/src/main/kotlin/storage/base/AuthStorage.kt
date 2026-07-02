@@ -8,7 +8,7 @@ import kotlin.time.Instant
 interface AuthStorage {
     suspend fun setPassword(id: UserId, password: String)
     suspend fun verifyPassword(id: UserId, password: String): Boolean
-    suspend fun recreateTokenPair(
+    suspend fun createTokenPair(
         userId: UserId,
         currentTime: Instant,
         accessTokenExpiration: Duration,
@@ -17,6 +17,7 @@ interface AuthStorage {
 
     suspend fun verifyAccessTokenOrNull(accessToken: String, currentTime: Instant): UserId?
     suspend fun verifyRefreshTokenOrNull(refreshToken: String, currentTime: Instant): UserId?
+    suspend fun revokeRefreshToken(refreshToken: String)
     suspend fun revokeTokens(userId: UserId)
     suspend fun setClientState(
         state: String,

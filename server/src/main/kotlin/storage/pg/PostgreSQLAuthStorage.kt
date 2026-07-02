@@ -36,7 +36,7 @@ class PostgreSQLAuthStorage : AuthStorage {
             if (pwhash != null) verifyPasswordSuspend(password, pwhash) else false
         }
 
-    override suspend fun recreateTokenPair(
+    override suspend fun createTokenPair(
         userId: UserId,
         currentTime: Instant,
         accessTokenExpiration: Duration,
@@ -47,12 +47,12 @@ class PostgreSQLAuthStorage : AuthStorage {
             refresh = generateToken(),
         )
         tx {
-            AccessTokens.upsert(AccessTokens.userId) {
+            AccessTokens.insert {
                 it[AccessTokens.userId] = userId.value
                 it[AccessTokens.hash] = hashToken(tokenPair.access)
                 it[AccessTokens.expiresAt] = currentTime + accessTokenExpiration
             }
-            RefreshTokens.upsert(RefreshTokens.userId) {
+            RefreshTokens.insert {
                 it[RefreshTokens.userId] = userId.value
                 it[RefreshTokens.hash] = hashToken(tokenPair.refresh)
                 it[RefreshTokens.expiresAt] = currentTime + refreshTokenExpiration
@@ -88,6 +88,12 @@ class PostgreSQLAuthStorage : AuthStorage {
                 .singleOrNull()
         }
             ?.let { UserId(it[RefreshTokens.userId].value) }
+
+    override suspend fun revokeRefreshToken(refreshToken: String) {
+        tx {
+            RefreshTokens.deleteWhere { RefreshTokens.hash eq hashToken(refreshToken) }
+        }
+    }
 
     override suspend fun revokeTokens(userId: UserId) {
         tx {

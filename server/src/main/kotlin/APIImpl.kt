@@ -62,8 +62,8 @@ class APIImpl(
         }
     }
 
-    private suspend fun recreateTokenPair(userId: UserId): TokenPair {
-        val tokens = storages.auth.recreateTokenPair(
+    private suspend fun createTokenPair(userId: UserId): TokenPair {
+        val tokens = storages.auth.createTokenPair(
             userId = userId,
             currentTime = Clock.System.now(),
             accessTokenExpiration = accessTokenExpiration,
@@ -116,7 +116,7 @@ class APIImpl(
         if (!storages.auth.verifyPassword(user.id, loginData.password)) {
             return Response.Error("Invalid password", HttpStatusCode.Unauthorized)
         }
-        return Response.Success(recreateTokenPair(user.id))
+        return Response.Success(createTokenPair(user.id))
     }
 
     override suspend fun getMe(userId: UserId): Response<User> =
@@ -140,7 +140,8 @@ class APIImpl(
                 "Invalid refresh token",
                 HttpStatusCode.Unauthorized,
             )
-        return Response.Success(recreateTokenPair(userId))
+        storages.auth.revokeRefreshToken(refreshToken.value)
+        return Response.Success(createTokenPair(userId))
     }
 
     override suspend fun logoutAll(userId: UserId): Response<Unit> {
@@ -300,7 +301,7 @@ class APIImpl(
                 "No user found for auth code ${code.code}",
                 HttpStatusCode.BadRequest,
             )
-        return Response.Success(recreateTokenPair(userId))
+        return Response.Success(createTokenPair(userId))
     }
 
     override suspend fun handleAuthentication(token: AccessToken): UserId? =
