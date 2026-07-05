@@ -28,32 +28,32 @@ internal suspend fun <T> readonlyTx(block: suspend R2dbcTransaction.() -> T) = s
 )
 
 internal fun mapDtoTeam(team: Team): WinnerTeam = when (team) {
-    Team.Mafia -> WinnerTeam.MAFIA
-    Team.Citizen -> WinnerTeam.CITIZEN
+    Mafia -> MAFIA
+    Citizen -> CITIZEN
 }
 
 internal fun mapDtoRole(role: DtoRole): DaoRole = when (role) {
-    DtoRole.Mafia -> DaoRole.MAFIA
-    DtoRole.Don -> DaoRole.DON
-    DtoRole.Sheriff -> DaoRole.SHERIFF
-    DtoRole.Citizen -> DaoRole.CITIZEN
+    Mafia -> MAFIA
+    Don -> DON
+    Sheriff -> SHERIFF
+    Citizen -> CITIZEN
 }
 
 internal fun mapProvider(provider: UserStorage.ExternalUserProvider): ExternalProvider =
     when (provider) {
-        UserStorage.ExternalUserProvider.Telegram -> ExternalProvider.TELEGRAM
+        Telegram -> TELEGRAM
     }
 
 internal fun mapDaoWinnerTeam(team: WinnerTeam): Team = when (team) {
-    WinnerTeam.MAFIA -> Team.Mafia
-    WinnerTeam.CITIZEN -> Team.Citizen
+    MAFIA -> Mafia
+    CITIZEN -> Citizen
 }
 
 internal fun mapDaoRole(role: DaoRole): DtoRole = when (role) {
-    DaoRole.MAFIA -> DtoRole.Mafia
-    DaoRole.DON -> DtoRole.Don
-    DaoRole.SHERIFF -> DtoRole.Sheriff
-    DaoRole.CITIZEN -> DtoRole.Citizen
+    MAFIA -> Mafia
+    DON -> Don
+    SHERIFF -> Sheriff
+    CITIZEN -> Citizen
 }
 
 internal fun playerFromDao(row: ResultRow): Player =

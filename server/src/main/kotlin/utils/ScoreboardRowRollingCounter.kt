@@ -38,7 +38,7 @@ class ScoreboardRowRollingCounter(
         }
         if (wasKilledFirstNight) {
             firstNightDeaths++
-            if (playerRole.team == Team.Citizen) {
+            if (playerRole.team == Citizen) {
                 bestTurnPointsX100 += when (guessedMafiaCount) {
                     0 -> 0
                     1 -> 10
@@ -52,7 +52,7 @@ class ScoreboardRowRollingCounter(
                     //  may be killed first night, and maintaining a separate counter for this
                     //  is pointless IMO.
                     guessedMafiaCount == 0 -> null
-                    winnerTeam == Team.Citizen -> 1
+                    winnerTeam == Citizen -> 1
                     else -> 2
                 }
                 ciDividers.add(divider)

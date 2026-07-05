@@ -25,14 +25,14 @@ enum class StorageType {
             "inmemory", "in_memory" -> IN_MEMORY
             "pg", "postgresql" -> POSTGRESQL
             else -> throw IllegalArgumentException(
-                "Invalid storage type: $type; must be one of: inmemory, in_memory, pg, postgresql"
+                "Invalid storage type: $type; must be one of: inmemory, in_memory, pg, postgresql",
             )
         }
     }
 }
 
 fun StorageProvider(type: StorageType): StorageProvider = when (type) {
-    StorageType.IN_MEMORY -> InMemoryStorageProvider(
+    IN_MEMORY -> InMemoryStorageProvider(
         auth = InMemoryAuthStorage(),
         game = InMemoryGameStorage(),
         player = InMemoryPlayerStorage(),
@@ -40,7 +40,7 @@ fun StorageProvider(type: StorageType): StorageProvider = when (type) {
         user = InMemoryUserStorage(),
     )
 
-    StorageType.POSTGRESQL -> PostgreSQLStorageProvider(
+    POSTGRESQL -> PostgreSQLStorageProvider(
         auth = PostgreSQLAuthStorage(),
         game = PostgreSQLGameStorage(),
         player = PostgreSQLPlayerStorage(),

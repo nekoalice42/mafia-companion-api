@@ -11,18 +11,18 @@ public data class RoleCounter(
     var citizen: Int = 0,
 ) {
     public operator fun get(role: Role): Int = when (role) {
-        Role.Mafia -> mafia
-        Role.Don -> don
-        Role.Sheriff -> sheriff
-        Role.Citizen -> citizen
+        Mafia -> mafia
+        Don -> don
+        Sheriff -> sheriff
+        Citizen -> citizen
     }
 
     public operator fun set(role: Role, value: Int) {
         when (role) {
-            Role.Mafia -> mafia = value
-            Role.Don -> don = value
-            Role.Sheriff -> sheriff = value
-            Role.Citizen -> citizen = value
+            Mafia -> mafia = value
+            Don -> don = value
+            Sheriff -> sheriff = value
+            Citizen -> citizen = value
         }
     }
 

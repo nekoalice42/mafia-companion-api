@@ -9,7 +9,11 @@ plugins {
 }
 
 subprojects {
-    val args = listOf("-Xallow-returns-result-of", "-Xreturn-value-checker=full")
+    val args = listOf(
+        "-Xallow-returns-result-of",
+        "-Xreturn-value-checker=full",
+        "-Xcontext-sensitive-resolution",
+    )
     tasks.withType<KotlinCompile>().all {
         compilerOptions.freeCompilerArgs.addAll(args)
     }

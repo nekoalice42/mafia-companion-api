@@ -282,7 +282,7 @@ class APIImpl(
         // is (kind of) safe, but it's safer to reconstruct the response.
         if (result !is Response.Success) return when (result) {
             is Response.Error -> Response.Error(result.message, result.statusCode)
-            is Response.Redirect -> Response.Redirect(result.url)
+            is Redirect -> Response.Redirect(result.url)
         }
         val response = requireNotNull(result.response)
         // Copied from [io.ktor.server.html.respondHtml].

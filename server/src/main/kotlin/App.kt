@@ -32,8 +32,8 @@ private object AttributeKeys {
 fun Application.module() {
     val storageType = getPropertyOrNull("mafia-api.storage.type")?.getString()
         ?.let(StorageType::parse)
-        ?: StorageType.POSTGRESQL
-    if (storageType == StorageType.POSTGRESQL) {
+        ?: POSTGRESQL
+    if (storageType == POSTGRESQL) {
         R2dbcDatabase.connect(
             url = "r2dbc:" + getProperty("mafia-api.storage.postgresql.url").getString(),
             driver = "postgresql",
