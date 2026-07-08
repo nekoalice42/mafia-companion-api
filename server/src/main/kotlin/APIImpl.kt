@@ -39,7 +39,7 @@ private val allowedAppRedirectUrlRegex = Regex("""^mafia-api://auth/[^?&=]+$""")
 
 class APIImpl(
     private val storages: StorageProvider,
-    private val telegramOidcClientId: String,
+    private val telegramOidcClientId: String?,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
@@ -224,6 +224,7 @@ class APIImpl(
         token: TelegramIdToken,
         oauthState: String,
     ): Response<ExternalAuthChallenge> {
+        requireNotNull(telegramOidcClientId) { "Telegram OIDC is not configured" }
         val identity = parseAndVerifyTelegramToken(token.value, telegramOidcClientId).let {
             if (it.isFailure) {
                 return Response.Error(

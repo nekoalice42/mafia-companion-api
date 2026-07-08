@@ -15,17 +15,17 @@ enum class StorageType {
          *  StorageType enum value.
          *
          * @param type The string representation of the storage type. Supported values are:
-         * - `"inmemory"` or `"in_memory"` for [IN_MEMORY]
-         * - `"pg"` or `"postgresql"` for [POSTGRESQL]
+         * - `"in-memory"` for [IN_MEMORY]
+         * - `"postgresql"` for [POSTGRESQL]
          * @return The corresponding StorageType enum value if the input matches a known storage
          *  type.
          * @throws IllegalArgumentException if the input does not match any valid storage type.
          */
         fun parse(type: String): StorageType = when (type) {
-            "inmemory", "in_memory" -> IN_MEMORY
-            "pg", "postgresql" -> POSTGRESQL
+            "in-memory" -> IN_MEMORY
+            "postgresql" -> POSTGRESQL
             else -> throw IllegalArgumentException(
-                "Invalid storage type: $type; must be one of: inmemory, in_memory, pg, postgresql",
+                "Invalid storage type: $type; must be one of: 'in-memory', 'postgresql'",
             )
         }
     }

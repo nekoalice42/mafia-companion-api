@@ -14,36 +14,33 @@ import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.auth.AccessToken
 import me.nekoalice.mafia.api.server.storage.StorageProvider
-import me.nekoalice.mafia.api.server.storage.StorageType
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import kotlin.time.Duration.Companion.minutes
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ContentNegotiationClient
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
-private fun Application.getProperty(path: String) = environment.config.property(path)
-private fun Application.getPropertyOrNull(path: String) = environment.config.propertyOrNull(path)
-
 private object AttributeKeys {
     val api = AttributeKey<BaseAPI>("API")
     val client = AttributeKey<HttpClient>("Client")
+    val config = AttributeKey<MafiaAppConfig>("MafiaConfig")
 }
 
 fun Application.module() {
-    val storageType = getPropertyOrNull("mafia-api.storage.type")?.getString()
-        ?.let(StorageType::parse)
-        ?: POSTGRESQL
-    if (storageType == POSTGRESQL) {
-        R2dbcDatabase.connect(
-            url = "r2dbc:" + getProperty("mafia-api.storage.postgresql.url").getString(),
-            driver = "postgresql",
-            user = getProperty("mafia-api.storage.postgresql.user").getString(),
-            password = getProperty("mafia-api.storage.postgresql.password").getString(),
-        )
+    val config = loadAppConfig(environment.config.property("mafia-api"))
+    if (config.storage is StorageConfig.PostgreSQL) {
+        with(config.storage.config) {
+            R2dbcDatabase.connect(
+                url = "r2dbc:$url",
+                driver = "postgresql",
+                user = user,
+                password = password,
+            )
+        }
     }
     val api = APIImpl(
-        storages = StorageProvider(storageType),
-        telegramOidcClientId = getProperty("mafia-api.telegram-oidc.client_id").getString(),
+        storages = StorageProvider(config.storage.type),
+        telegramOidcClientId = config.telegramOidc?.clientId,
     )
     val httpClient = HttpClient {
         install(ContentNegotiationClient) {
@@ -56,6 +53,7 @@ fun Application.module() {
     }
     attributes[AttributeKeys.api] = api
     attributes[AttributeKeys.client] = httpClient
+    attributes[AttributeKeys.config] = config
 
     install(ContentNegotiation) {
         json(
@@ -89,29 +87,26 @@ fun Application.module() {
 fun Application.configureTelegramOidc() {
     val api = attributes[AttributeKeys.api]
     val client = attributes[AttributeKeys.client]
-
-    val clientId = getProperty("mafia-api.telegram-oidc.client_id").getString()
-    val clientSecret = getProperty("mafia-api.telegram-oidc.client_secret").getString()
-    val redirectHost = getProperty("mafia-api.telegram-oidc.redirect_host").getString()
-    val stateSecret = getProperty("mafia-api.telegram-oidc.state_secret").getString()
+    val oidcConfig = attributes[AttributeKeys.config].telegramOidc
+        ?: TODO("Optional Telegram OIDC configuration is not implemented yet")
 
     authentication {
         oauth("telegram") {
             this@oauth.client = client
             urlProvider = {
-                "$redirectHost/auth/telegram/callback"
+                "${oidcConfig.redirectHost}/auth/telegram/callback"
             }
             settings = OAuthServerSettings.OAuth2ServerSettings(
                 name = "telegram",
                 authorizeUrl = "https://oauth.telegram.org/auth",
                 accessTokenUrl = "https://oauth.telegram.org/token",
-                clientId = clientId,
-                clientSecret = clientSecret,
+                clientId = oidcConfig.clientId,
+                clientSecret = oidcConfig.clientSecret,
                 defaultScopes = listOf("openid"),
                 requestMethod = HttpMethod.Post,
                 accessTokenRequiresBasicAuth = true,
                 nonceManager = StatelessHmacNonceManager(
-                    key = stateSecret.encodeToByteArray(),
+                    key = oidcConfig.stateSecret.encodeToByteArray(),
                     timeoutMillis = 5.minutes.inWholeMilliseconds,
                 ),
                 onStateCreated = { call, state ->
@@ -120,7 +115,7 @@ fun Application.configureTelegramOidc() {
                         call.request.queryParameters["redirect_url"],
                         call.request.queryParameters["state"],
                     )
-                }
+                },
             )
             fallback = { cause ->
                 api.handleTelegramOauthError(cause).sendInResponseTo(this)
