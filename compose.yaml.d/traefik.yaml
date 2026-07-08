@@ -5,6 +5,7 @@ services:
     labels:
       traefik.enable: "true"
       traefik.http.routers.mafia-api.rule: "Host(`api.mafia.nekoalice.me`)"
+      traefik.docker.network: "docker-services"
     networks:
       - default
       - services
