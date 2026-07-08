@@ -29,7 +29,10 @@ internal object AuthTelegramOauthCallbackDescriber : OpenAPIRouteDescriber {
                 successResponse("Login successful, redirecting to provided redirect_url", Found)
                 errorResponse(BadRequest, "Bad redirect_url")
                 errorResponse(Forbidden, "No user registered with this Telegram account")
-                errorResponse(ServiceUnavailable, "Telegram login flow failed")
+                errorResponse(
+                    ServiceUnavailable,
+                    "Telegram login flow failed, or Telegram OAuth2 is not available",
+                )
             }
         }
 

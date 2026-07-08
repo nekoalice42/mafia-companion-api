@@ -3,6 +3,7 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.auth
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 
 internal object AuthTelegramLoginDescriber : OpenAPIRouteDescriber {
     override val supportedMethods: Set<HttpMethod> =
@@ -15,6 +16,9 @@ internal object AuthTelegramLoginDescriber : OpenAPIRouteDescriber {
         require(method == Get) { "Only GET method is supported" }
         with(builder) {
             description = "Start Telegram login flow"
+            responses {
+                errorResponse(ServiceUnavailable, "Telegram OAuth2 is not available")
+            }
         }
     }
 }
