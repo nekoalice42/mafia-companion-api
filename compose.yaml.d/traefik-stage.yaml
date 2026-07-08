@@ -1,0 +1,16 @@
+services:
+  server:
+    environment:
+      TELEGRAM_OIDC_REDIRECT_HOST: https://stage.api.mafia.nekoalice.me
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.mafia-api-stage.rule: "Host(`stage.api.mafia.nekoalice.me`)"
+      traefik.docker.network: "docker-services"
+    networks:
+      - default
+      - services
+
+networks:
+  services:
+    name: docker-services
+    external: true

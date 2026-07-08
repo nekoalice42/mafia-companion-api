@@ -1,0 +1,16 @@
+services:
+  migrations:
+    image: "ghcr.io/nekoalice42/mafia-companion-api/migrations:dev"
+    build:
+      context: .
+      target: migrations
+  cleaner:
+    image: "ghcr.io/nekoalice42/mafia-companion-api/cleaner:dev"
+    build:
+      context: .
+      target: cleaner
+  server:
+    image: "ghcr.io/nekoalice42/mafia-companion-api/server:dev"
+    build:
+      context: .
+      target: server
