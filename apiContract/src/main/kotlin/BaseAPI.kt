@@ -62,7 +62,7 @@ public abstract class BaseAPI(
     public abstract suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,
         oauthState: String,
-    ): Response<String>
+    ): Response<Unit>
 
     public abstract suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair>
 
@@ -537,6 +537,8 @@ public abstract class BaseAPI(
     )
 
     public sealed interface Response<SuccessT : Any> {
+        public suspend fun sendInResponseTo(call: ApplicationCall)
+
         public data class Success<T : Any>(
             val response: T?,
             val statusCode: HttpStatusCode = HttpStatusCode.OK,
@@ -562,6 +564,44 @@ public abstract class BaseAPI(
                     call.respond(statusCode, response!!, typeInfo!!)
         }
 
+        public data class Raw<Unused : Any>(
+            val body: String,
+            val contentType: ContentType,
+            val statusCode: HttpStatusCode = HttpStatusCode.OK,
+        ) : Response<Unused> {
+            override suspend fun sendInResponseTo(call: ApplicationCall): Unit =
+                call.respondText(body, contentType, statusCode)
+
+            public companion object {
+                public fun <Unused : Any> html(
+                    body: String,
+                    statusCode: HttpStatusCode = HttpStatusCode.OK,
+                ): Raw<Unused> = Raw(
+                    body,
+                    ContentType.Text.Html.withCharset(Charsets.UTF_8),
+                    statusCode,
+                )
+
+                public fun <Unused : Any> text(
+                    body: String,
+                    statusCode: HttpStatusCode = HttpStatusCode.OK,
+                ): Raw<Unused> = Raw(
+                    body,
+                    ContentType.Text.Plain.withCharset(Charsets.UTF_8),
+                    statusCode,
+                )
+
+                public fun <Unused : Any> rawJson(
+                    body: String,
+                    statusCode: HttpStatusCode = HttpStatusCode.OK,
+                ): Raw<Unused> = Raw(
+                    body,
+                    ContentType.Application.Json.withCharset(Charsets.UTF_8),
+                    statusCode,
+                )
+            }
+        }
+
         public data class Error<Unused : Any>(
             val message: String,
             val statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
@@ -581,8 +621,6 @@ public abstract class BaseAPI(
             override suspend fun sendInResponseTo(call: ApplicationCall): Unit =
                 call.respondRedirect(url)
         }
-
-        public suspend fun sendInResponseTo(call: ApplicationCall)
 
         public companion object {
             public inline fun <reified T : Any> Success(

@@ -56,10 +56,7 @@ class APIImpl(
     ): Response<Unit> {
         val existed = storage.getByIdOrNull(id) != null
         storage.editOrAdd(id, item)
-        return when (existed) {
-            true -> Response.Success()
-            false -> Response.Success(HttpStatusCode.Created)
-        }
+        return if (existed) Response.Success() else Response.Success(HttpStatusCode.Created)
     }
 
     private suspend fun createTokenPair(userId: UserId): TokenPair {
@@ -275,14 +272,15 @@ class APIImpl(
     override suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,
         oauthState: String,
-    ): Response<String> {
+    ): Response<Unit> {
         val result = telegramOauthCallback(token, oauthState)
-        // I may have done something like `return result as Response<String>` as the type parameter
-        // of `Response` interface is only used in `Response.Success` class, so the type case
+        // I may have done something like `return result as Response<Unit>` as the type parameter
+        // of `Response` interface is only used in `Response.Success` class, so the type cast
         // is (kind of) safe, but it's safer to reconstruct the response.
         if (result !is Response.Success) return when (result) {
             is Response.Error -> Response.Error(result.message, result.statusCode)
             is Redirect -> Response.Redirect(result.url)
+            is Raw -> Response.Raw(result.body, result.contentType, result.statusCode)
         }
         val response = requireNotNull(result.response)
         // Copied from [io.ktor.server.html.respondHtml].
@@ -292,7 +290,7 @@ class APIImpl(
                 getTelegramLoginSuccessHtml(response.code)
             }
         }
-        return Response.Success(text)
+        return Response.Raw.html(text)
     }
 
     override suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair> {
