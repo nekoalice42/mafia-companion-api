@@ -27,9 +27,20 @@ data class TelegramOidcConfig(
     val stateSecret: String,
 )
 
+data class OpenAPIConfig(
+    val urls: EnvironmentUrls,
+)
+
+data class EnvironmentUrls(
+    val dev: String,
+    val stage: String?,
+    val prod: String?,
+)
+
 data class MafiaAppConfig(
     val storage: StorageConfig,
     val telegramOidc: TelegramOidcConfig?,
+    val openapi: OpenAPIConfig,
 )
 
 fun loadAppConfig(config: ApplicationConfigValue) = config.getAs<RawMafiaAppConfig>().let { raw ->
@@ -55,7 +66,16 @@ fun loadAppConfig(config: ApplicationConfigValue) = config.getAs<RawMafiaAppConf
                     stateSecret = stateSecret!!,
                 )
             }
-        else null
+        else null,
+        openapi = with(raw.openapi) {
+            OpenAPIConfig(
+                urls = EnvironmentUrls(
+                    dev = urls["dev"]!!,
+                    stage = urls["stage"],
+                    prod = urls["prod"],
+                ),
+            )
+        },
     )
 }
 
@@ -64,6 +84,7 @@ private data class RawMafiaAppConfig(
     val storage: RawStorageConfig,
     @SerialName("telegram-oidc")
     val telegramOidc: RawTelegramOidcConfig,
+    val openapi: RawOpenAPIConfig,
 ) {
     @Serializable
     data class RawStorageConfig(
@@ -116,6 +137,15 @@ private data class RawMafiaAppConfig(
                     stateSecret,
                 ).size in setOf(0, 4)
             ) { "Telegram OIDC configuration must be either empty or fully specified" }
+        }
+    }
+
+    @Serializable
+    data class RawOpenAPIConfig(
+        val urls: Map<String, String?>
+    ) {
+        init {
+            requireNotNull(urls["dev"]) { "'dev' URL must be specified" }
         }
     }
 }

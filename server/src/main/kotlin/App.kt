@@ -41,6 +41,7 @@ fun Application.module() {
     val api = APIImpl(
         storages = StorageProvider(config.storage.type),
         telegramOidcClientId = config.telegramOidc?.clientId,
+        urls = config.openapi.urls,
     )
     val httpClient = HttpClient {
         install(ContentNegotiationClient) {

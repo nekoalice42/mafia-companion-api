@@ -17,3 +17,8 @@ mafia-api:
     client_secret: ${?TELEGRAM_OIDC_CLIENT_SECRET}
     redirect_host: ${?TELEGRAM_OIDC_REDIRECT_HOST}
     state_secret: ${?TELEGRAM_OIDC_STATE_SECRET}
+  openapi:
+    urls:
+      dev: http://localhost:8080
+      stage: https://stage.api.mafia.nekoalice.me
+      prod: https://api.mafia.nekoalice.me

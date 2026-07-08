@@ -40,14 +40,15 @@ private val allowedAppRedirectUrlRegex = Regex("""^mafia-api://auth/[^?&=]+$""")
 class APIImpl(
     private val storages: StorageProvider,
     private val telegramOidcClientId: String?,
+    urls: EnvironmentUrls,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
         version = "0.1.0-alpha.6",
         licenseIdentifier = "AGPL-3.0",
-        developmentUrl = "http://localhost:8080",
-        stagingUrl = "https://stage.api.mafia.nekoalice.me",
-        productionUrl = "https://api.mafia.nekoalice.me",
+        developmentUrl = urls.dev,
+        stagingUrl = urls.stage,
+        productionUrl = urls.prod,
     ),
 ) {
     private suspend fun <StorageT : CRUDStorage<ItemT, IdT>, ItemT, IdT> upsert(
