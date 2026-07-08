@@ -2,7 +2,6 @@ ktor:
   application:
     modules:
       - me.nekoalice.mafia.api.server.AppKt.module
-      - me.nekoalice.mafia.api.server.AppKt.configureTelegramOidc
   deployment:
     port: 8080
 mafia-api:
