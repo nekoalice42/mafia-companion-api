@@ -88,7 +88,14 @@ fun Application.configureTelegramOidc() {
     val api = attributes[AttributeKeys.api]
     val client = attributes[AttributeKeys.client]
     val oidcConfig = attributes[AttributeKeys.config].telegramOidc
-        ?: TODO("Optional Telegram OIDC configuration is not implemented yet")
+
+    if (oidcConfig == null) {
+        log.warn("Login via Telegram is not configured")
+        routing {
+            api.applyUnavailableTelegramOauthRoutesTo(this)
+        }
+        return
+    }
 
     authentication {
         oauth("telegram") {

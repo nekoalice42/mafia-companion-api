@@ -85,7 +85,11 @@ public abstract class BaseAPI(
     }
 
     public fun applyTelegramOauthRoutesTo(routing: Route): Unit = with(routing) {
-        applyTelegramOauthRoutes()
+        applyTelegramOauthRoutes(isConfigured = true)
+    }
+
+    public fun applyUnavailableTelegramOauthRoutesTo(routing: Route): Unit = with(routing) {
+        applyTelegramOauthRoutes(isConfigured = false)
     }
 
     public val requiredMethods: List<HttpMethod> = listOf(

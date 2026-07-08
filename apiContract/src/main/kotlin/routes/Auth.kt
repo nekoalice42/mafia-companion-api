@@ -56,15 +56,23 @@ internal fun BaseAPI.applyPrivateAuthRoutes() {
 }
 
 context(routing: Route)
-internal fun BaseAPI.applyTelegramOauthRoutes() {
+internal fun BaseAPI.applyTelegramOauthRoutes(isConfigured: Boolean) {
     routing.define<AuthResource.Telegram.Login, Unit>(Get, AuthTelegramLoginDescriber) {
         // This route exists only to start OAuth2 login flow, it does nothing
-        Response.Error("Assertion error", InternalServerError)
+        if (!isConfigured)
+            telegramOauthNotAvailable
+        else
+            Response.Error("Assertion error", InternalServerError)
     }
 
     // TODO: use `define`
     @OptIn(ExperimentalKtorApi::class)
     routing.resource<AuthResource.Telegram.OauthCallback> {
+        if (!isConfigured) {
+            get { telegramOauthNotAvailable.sendInResponseTo(call) }
+            return@resource
+        }
+
         accept(ContentType.Text.Html) {
             get {
                 telegramOauthCommon(BaseAPI::telegramOauthCallbackHtml).sendInResponseTo(call)
@@ -75,7 +83,6 @@ internal fun BaseAPI.applyTelegramOauthRoutes() {
             telegramOauthCommon(BaseAPI::telegramOauthCallback).sendInResponseTo(call)
         }
     }.describe { AuthTelegramOauthCallbackDescriber.describe(Get, this) }
-
 }
 
 @OptIn(ExperimentalContracts::class)
@@ -96,3 +103,6 @@ private suspend fun <RT : Any> BaseAPI.telegramOauthCommon(
     val state = principal.state ?: return error
     return next(TelegramIdToken(token), state)
 }
+
+private val telegramOauthNotAvailable =
+    Response.Error<Unit>("Telegram OAuth2 is not available", ServiceUnavailable)
