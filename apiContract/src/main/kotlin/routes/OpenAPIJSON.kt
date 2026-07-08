@@ -30,6 +30,9 @@ internal fun BaseAPI.applyPublicOpenAPIJSONRoutes() {
                 info.developmentUrl?.let {
                     Server(url = it, description = "Development server")
                 },
+                info.stagingUrl?.let {
+                    Server(url = it, description = "Staging server")
+                },
                 info.productionUrl?.let {
                     Server(url = it, description = "Production server")
                 },

@@ -46,6 +46,7 @@ class APIImpl(
         version = "0.1.0-alpha.6",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = "http://localhost:8080",
+        stagingUrl = "https://stage.api.mafia.nekoalice.me",
         productionUrl = "https://api.mafia.nekoalice.me",
     ),
 ) {
