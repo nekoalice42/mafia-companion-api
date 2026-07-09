@@ -68,7 +68,7 @@ class ScoreboardRowRollingCounter(
     fun calculateCiPoints() {
         if (totalPlayCount < 4) return
         val b = (totalPlayCount * 0.4).roundedToNearestInt
-        val baseCiX100 = (ciDividers.size * 40 roundDiv b).coerceAtMost(40)
+        val baseCiX100 = (ciDividers.size * 40 roundDiv b).coerceAtMost(50)
         for (k in ciDividers.filterNotNull()) {
             ciPointsX100 += (baseCiX100 roundDiv k)
         }
