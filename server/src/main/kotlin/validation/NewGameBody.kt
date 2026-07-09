@@ -24,16 +24,16 @@ fun NewGameBody.validate() {
         Role.Sheriff to 1,
         Role.Citizen to 6,
     )
-    // -1.5, -1.0, -0.8..-0.2, 0.2..0.8, 1.0
+    // -2.5, -2.1, -1.5, -1.0..-0.2, 0.2..1.0
     val allowedExtraPointsX100 = sequence {
-        yield(-150)
-        yield(-100)
-        (2..8).forEach {
+        (2..10).forEach {
             yield(it * 10)
             yield(-it * 10)
         }
-        yield(100)
-    }.toList()
+        yield(-150)
+        yield(-210)
+        yield(-250)
+    }.toSet()
     var extraPointsX100PositiveSum = 0
     var extraPointsCounter = 0
     var hasFirstNightDeath = false
@@ -52,8 +52,8 @@ fun NewGameBody.validate() {
                 "extra points must be a multiple of 0.1 (id=${player.playerId})"
             }
             require(playerExtraPoints.pointsX100 in allowedExtraPointsX100) {
-                "extra points value must be -1.5, -1.0, -0.8..-0.2, 0.2..0.8, 1.0" +
-                        " (id=${player.playerId})"
+                val ptsStr = allowedExtraPointsX100.joinToString()
+                "extra points value must be one of $ptsStr (id=${player.playerId})"
             }
             extraPointsCounter++
             if (playerExtraPoints.pointsX100 > 0) {
