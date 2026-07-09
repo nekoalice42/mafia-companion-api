@@ -26,12 +26,10 @@ class ScoreboardRowRollingCounter(
         wasKilledFirstNight: Boolean,
         guessedMafiaCount: Int,
     ) {
-        require(!wasKilledFirstNight && guessedMafiaCount == 0 || wasKilledFirstNight) {
-            "Guessed mafia count cannot be non-zero if not killed first night"
-        }
-        if (winnerTeam == null) {
-            require(extraPointsX100 <= 0) {
-                "Extra points cannot be positive if there is no winner"
+        // validate input (not game!)
+        if (!wasKilledFirstNight) {
+            require(guessedMafiaCount == 0) {
+                "Guessed mafia count cannot be non-zero if not killed first night"
             }
         }
         gamePointsX100 += extraPointsX100

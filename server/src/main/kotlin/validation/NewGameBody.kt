@@ -48,6 +48,11 @@ fun NewGameBody.validate() {
         }
         val playerExtraPoints = player.extraPoints
         if (playerExtraPoints != null) {
+            if (winnerTeam == null) {
+                require(playerExtraPoints.pointsX100 <= 0) {
+                    "Extra points cannot be positive if there is no winner (id=${player.playerId})"
+                }
+            }
             require(playerExtraPoints.pointsX100 % 10 == 0) {
                 "extra points must be a multiple of 0.1 (id=${player.playerId})"
             }
