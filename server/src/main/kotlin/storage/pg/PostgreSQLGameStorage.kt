@@ -20,7 +20,7 @@ class PostgreSQLGameStorage : GameStorage {
         tx {
             val newGameId = Games.insertAndGetId {
                 it[tournamentId] = game.tournament.value
-                it[winnerTeam] = mapDtoTeam(game.winnerTeam)
+                it[winnerTeam] = game.winnerTeam?.let(::mapDtoTeam)
                 it[startedAt] = game.startTime
             }
             InGamePlayers.batchInsert(game.players.withIndex()) { (index, player) ->
@@ -60,7 +60,7 @@ class PostgreSQLGameStorage : GameStorage {
             NewGameBody(
                 tournament = TournamentId(gamesResult[Games.tournamentId].value),
                 players = players,
-                winnerTeam = mapDaoWinnerTeam(gamesResult[Games.winnerTeam]),
+                winnerTeam = gamesResult[Games.winnerTeam]?.let(::mapDaoWinnerTeam),
                 startTime = gamesResult[Games.startedAt],
             )
         }.toList()

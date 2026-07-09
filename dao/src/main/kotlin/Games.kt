@@ -9,6 +9,7 @@ import kotlin.uuid.Uuid
 public object Games : UuidTable("games", uuidVersion = UuidVersion.V7) {
     public val tournamentId: Column<EntityID<Uuid>> = reference("tournament_id", Tournaments)
 
-    public val winnerTeam: Column<WinnerTeam> = enumerationByName<WinnerTeam>("winner_team")
+    public val winnerTeam: Column<WinnerTeam?> =
+        enumerationByName<WinnerTeam>("winner_team").nullable()
     public val startedAt: Column<Instant> = timestampWithTimeZoneAsInstant("started_at")
 }

@@ -9,6 +9,6 @@ import kotlin.time.Instant
 public data class NewGameBody(
     val tournament: TournamentId,
     val players: List<InGamePlayer>,
-    val winnerTeam: Team,
+    val winnerTeam: Team?,
     val startTime: Instant,
 )

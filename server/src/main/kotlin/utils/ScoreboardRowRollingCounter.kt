@@ -21,13 +21,18 @@ class ScoreboardRowRollingCounter(
 
     fun countGame(
         playerRole: Role,
-        winnerTeam: Team,
+        winnerTeam: Team?,
         extraPointsX100: Int = 0,
         wasKilledFirstNight: Boolean,
         guessedMafiaCount: Int,
     ) {
         require(!wasKilledFirstNight && guessedMafiaCount == 0 || wasKilledFirstNight) {
             "Guessed mafia count cannot be non-zero if not killed first night"
+        }
+        if (winnerTeam == null) {
+            require(extraPointsX100 <= 0) {
+                "Extra points cannot be positive if there is no winner"
+            }
         }
         gamePointsX100 += extraPointsX100
         playCount[playerRole] = playCount[playerRole] + 1
@@ -52,7 +57,7 @@ class ScoreboardRowRollingCounter(
                     //  may be killed first night, and maintaining a separate counter for this
                     //  is pointless IMO.
                     guessedMafiaCount == 0 -> null
-                    winnerTeam == Citizen -> 1
+                    winnerTeam != Mafia -> 1
                     else -> 2
                 }
                 ciDividers.add(divider)
