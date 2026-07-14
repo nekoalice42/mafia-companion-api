@@ -44,11 +44,6 @@ public abstract class BaseAPI(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>>
 
-    public abstract suspend fun telegramOauthCallback(
-        token: TelegramIdToken,
-        oauthState: String,
-    ): Response<ExternalAuthChallenge>
-
     public abstract suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,
         oauthState: String,

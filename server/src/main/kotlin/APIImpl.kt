@@ -221,10 +221,10 @@ class APIImpl(
         return Response.Success(ResponseList(scoreboardSorted))
     }
 
-    override suspend fun telegramOauthCallback(
+    override suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,
         oauthState: String,
-    ): Response<ExternalAuthChallenge> {
+    ): Response<Unit> {
         requireNotNull(telegramOidcClientId) { "Telegram OIDC is not configured" }
         val identity = parseAndVerifyTelegramToken(token.value, telegramOidcClientId).let {
             if (it.isFailure) {
@@ -250,47 +250,25 @@ class APIImpl(
             expiration = authCodeExpiration,
         )
         val clientState = storages.auth.popClientStateOrNull(oauthState, Clock.System.now())
-        if (clientState == null || clientState.redirectUrl == null) {
-            return Response.Success(
-                ExternalAuthChallenge(
-                    code = code,
-                    state = clientState?.state,
-                ),
-            )
+        if (clientState?.redirectUrl != null) {
+            if (!isRedirectUrlValid(clientState.redirectUrl)) {
+                return Response.Error(
+                    "Bad redirect URL",
+                    HttpStatusCode.BadRequest,
+                )
+            }
+            val url = with(URLBuilder(clientState.redirectUrl)) {
+                parameters["code"] = code
+                clientState.state?.let { parameters["state"] = it }
+                buildString()
+            }
+            return Response.Redirect(url)
         }
-        if (!isRedirectUrlValid(clientState.redirectUrl)) {
-            return Response.Error(
-                "Bad redirect URL",
-                HttpStatusCode.BadRequest,
-            )
-        }
-        val url = with(URLBuilder(clientState.redirectUrl)) {
-            parameters["code"] = code
-            clientState.state?.let { parameters["state"] = it }
-            buildString()
-        }
-        return Response.Redirect(url)
-    }
-
-    override suspend fun telegramOauthCallbackHtml(
-        token: TelegramIdToken,
-        oauthState: String,
-    ): Response<Unit> {
-        val result = telegramOauthCallback(token, oauthState)
-        // I may have done something like `return result as Response<Unit>` as the type parameter
-        // of `Response` interface is only used in `Response.Success` class, so the type cast
-        // is (kind of) safe, but it's safer to reconstruct the response.
-        if (result !is Response.Success) return when (result) {
-            is Response.Error -> Response.Error(result.message, result.statusCode)
-            is Redirect -> Response.Redirect(result.url)
-            is Raw -> Response.Raw(result.body, result.contentType, result.statusCode)
-        }
-        val response = requireNotNull(result.response)
         // Copied from [io.ktor.server.html.respondHtml].
         val text = buildString {
             append("<!DOCTYPE html>\n")
             appendHTML().html {
-                getTelegramLoginSuccessHtml(response.code)
+                getTelegramLoginSuccessHtml(code)
             }
         }
         return Response.Raw.html(text)
