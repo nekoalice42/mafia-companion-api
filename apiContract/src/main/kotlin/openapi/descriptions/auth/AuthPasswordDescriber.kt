@@ -2,11 +2,8 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.auth
 
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.defaultKtorBodyErrorResponsesFor
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.requestBodyOf
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.*
 import me.nekoalice.mafia.api.dto.auth.LoginData
 
 internal object AuthPasswordDescriber : OpenAPIResourceDescriber {
@@ -17,7 +14,7 @@ internal object AuthPasswordDescriber : OpenAPIResourceDescriber {
         method: HttpMethod,
         builder: Operation.Builder,
     ) {
-        require(method == Put) { "Only PUT method is supported" }
+        if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             requestBodyOf<LoginData>("Username and new password of a user")
             responses {

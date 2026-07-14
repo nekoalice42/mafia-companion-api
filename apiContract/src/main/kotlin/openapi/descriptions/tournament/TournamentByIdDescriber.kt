@@ -7,10 +7,11 @@ import io.ktor.http.HttpStatusCode.Companion.NoContent
 import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 
@@ -24,7 +25,7 @@ internal object TournamentByIdDescriber : OpenAPIResourceDescriber {
     ) = when (method) {
         Get -> describeGet(builder)
         Delete -> describeDelete(builder)
-        else -> throw IllegalArgumentException("Unsupported method: $method")
+        else -> unsupportedMethod(method)
     }
 
     private fun describeGet(builder: Operation.Builder) = builder.run {

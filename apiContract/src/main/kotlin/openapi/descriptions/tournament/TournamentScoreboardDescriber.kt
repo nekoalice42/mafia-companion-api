@@ -3,9 +3,10 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 import me.nekoalice.mafia.api.dto.response.ResponseList
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
@@ -18,7 +19,7 @@ internal object TournamentScoreboardDescriber : OpenAPIResourceDescriber {
         method: HttpMethod,
         builder: Operation.Builder,
     ) {
-        require(method == Get) { "Only GET method is supported" }
+        if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             parameters {
                 path("tournament_id") {

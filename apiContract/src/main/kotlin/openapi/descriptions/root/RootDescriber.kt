@@ -2,8 +2,9 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.root
 
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 import me.nekoalice.mafia.api.dto.health.HelloResponse
 
 internal object RootDescriber : OpenAPIResourceDescriber {
@@ -14,7 +15,7 @@ internal object RootDescriber : OpenAPIResourceDescriber {
         method: HttpMethod,
         builder: Operation.Builder,
     ) {
-        require(method == Get) { "Only GET method is supported" }
+        if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             responses {
                 successResponseOf<HelloResponse>("Liveness check")

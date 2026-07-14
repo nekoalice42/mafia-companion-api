@@ -3,10 +3,11 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.player
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
 
@@ -20,7 +21,7 @@ internal object PlayerByIdDescriber : OpenAPIResourceDescriber {
     ) = when (method) {
         Get -> describeGet(builder)
         Delete -> describeDelete(builder)
-        else -> throw IllegalArgumentException("Unsupported method: $method")
+        else -> unsupportedMethod(method)
     }
 
     private fun describeGet(builder: Operation.Builder) = builder.run {

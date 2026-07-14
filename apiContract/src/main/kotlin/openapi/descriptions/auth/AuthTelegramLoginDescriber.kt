@@ -4,6 +4,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 
 internal object AuthTelegramLoginDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
@@ -13,7 +14,7 @@ internal object AuthTelegramLoginDescriber : OpenAPIResourceDescriber {
         method: HttpMethod,
         builder: Operation.Builder,
     ) {
-        require(method == Get) { "Only GET method is supported" }
+        if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             description = "Start Telegram login flow"
             responses {

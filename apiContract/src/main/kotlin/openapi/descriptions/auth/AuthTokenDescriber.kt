@@ -4,12 +4,8 @@ import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.CustomHttpHeaders
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.defaultKtorBodyErrorResponsesFor
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.requestBodyOf
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.*
 import me.nekoalice.mafia.api.dto.auth.LoginData
 import me.nekoalice.mafia.api.dto.auth.RefreshToken
 import me.nekoalice.mafia.api.dto.auth.TokenPair
@@ -25,7 +21,7 @@ internal object AuthTokenDescriber : OpenAPIResourceDescriber {
         Post -> describePost(builder)
         Patch -> describePatch(builder)
         Delete -> describeDelete(builder)
-        else -> throw IllegalArgumentException("Unsupported method: $method")
+        else -> unsupportedMethod(method)
     }
 
     private fun describePost(builder: Operation.Builder) = builder.run {

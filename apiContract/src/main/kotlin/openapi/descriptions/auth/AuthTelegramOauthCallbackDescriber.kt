@@ -4,10 +4,11 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
 import me.nekoalice.mafia.api.dto.auth.ExternalAuthChallenge
 
 internal object AuthTelegramOauthCallbackDescriber : OpenAPIResourceDescriber {
@@ -18,7 +19,7 @@ internal object AuthTelegramOauthCallbackDescriber : OpenAPIResourceDescriber {
         method: HttpMethod,
         builder: Operation.Builder,
     ) {
-        require(method == Get) { "Only GET method is supported" }
+        if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             responses {
                 successResponseOf<ExternalAuthChallenge>("Login successful") {
