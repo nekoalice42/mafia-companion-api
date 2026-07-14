@@ -2,10 +2,10 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.auth
 
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 
-internal object AuthTelegramLoginDescriber : OpenAPIRouteDescriber {
+internal object AuthTelegramLoginDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get)
 

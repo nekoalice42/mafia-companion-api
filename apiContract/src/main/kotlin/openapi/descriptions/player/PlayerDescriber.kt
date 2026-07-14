@@ -6,11 +6,11 @@ import me.nekoalice.mafia.api.contracts.openapi.descriptions.defaultKtorBodyErro
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.requestBodyOf
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.response.ResponseList
 
-internal object PlayerDescriber : OpenAPIRouteDescriber {
+internal object PlayerDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get, Put)
 

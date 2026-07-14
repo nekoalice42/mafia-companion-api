@@ -4,24 +4,8 @@ import io.ktor.http.*
 import io.ktor.openapi.*
 import me.nekoalice.mafia.api.dto.response.ErrorResponse
 
-@Deprecated(
-    "Use explicit `successResponse`s",
-    ReplaceWith($$"successResponse(\"$what created\", Created); successResponse(\"$what updated\", NoContent)"),
-    DeprecationLevel.ERROR,
-)
-internal fun Responses.Builder.commonPutResponses(what: String) {
-    successResponse("$what created", Created)
-    successResponse("$what updated", NoContent)
-}
-
-@Deprecated(
-    "Use explicit `successResponse`s",
-    ReplaceWith($$"successResponse(\"$what deleted or didn't exist before\", NoContent)"),
-    DeprecationLevel.ERROR,
-)
-internal fun Responses.Builder.commonDeleteResponses(what: String) {
-    successResponse("$what deleted or didn't exist before", NoContent)
-}
+internal fun unsupportedMethod(method: HttpMethod): Nothing =
+    throw UnsupportedOperationException("Method $method is not supported")
 
 internal inline fun <reified T> Responses.Builder.defaultKtorBodyErrorResponsesFor() {
     response(BadRequest, "Request body could not be converted to ${T::class.simpleName}")

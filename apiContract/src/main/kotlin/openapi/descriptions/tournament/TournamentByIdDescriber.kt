@@ -10,11 +10,11 @@ import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 
-internal object TournamentByIdDescriber : OpenAPIRouteDescriber {
+internal object TournamentByIdDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get, Delete)
 

@@ -4,10 +4,10 @@ import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.responseOf
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 
-internal object HealthDescriber : OpenAPIRouteDescriber {
+internal object HealthDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get)
 

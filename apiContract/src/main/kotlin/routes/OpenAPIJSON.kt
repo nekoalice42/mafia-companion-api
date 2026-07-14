@@ -1,20 +1,17 @@
 package me.nekoalice.mafia.api.contracts.routes
 
-import io.ktor.openapi.OpenApiDoc
-import io.ktor.openapi.OpenApiInfo
-import io.ktor.openapi.Server
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.openapi.plus
-import io.ktor.server.routing.routingRoot
+import io.ktor.openapi.*
+import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.*
 import kotlinx.serialization.json.Json
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.BaseAPI.Response
 import me.nekoalice.mafia.api.contracts.resources.OpenAPIJSONResource
-import me.nekoalice.mafia.api.contracts.routes.meta.define
+import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
 
 context(routing: Route)
 internal fun BaseAPI.applyPublicOpenAPIJSONRoutes() {
-    routing.define<OpenAPIJSONResource, _>(Get, null) {
+    routing.defineRoute<OpenAPIJSONResource, _>(Get, null) {
         val doc = OpenApiDoc(
             info = OpenApiInfo(
                 title = info.name,

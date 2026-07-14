@@ -3,10 +3,10 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.user
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.dto.user.User
 
-internal object UserMeDescriber : OpenAPIRouteDescriber {
+internal object UserMeDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get)
 

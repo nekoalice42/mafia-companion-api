@@ -6,11 +6,11 @@ import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
-import me.nekoalice.mafia.api.contracts.openapi.OpenAPIRouteDescriber
+import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
 
-internal object PlayerByIdDescriber : OpenAPIRouteDescriber {
+internal object PlayerByIdDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
         setOf(Get, Delete)
 

@@ -2,16 +2,14 @@ package me.nekoalice.mafia.api.contracts.routes
 
 import io.ktor.http.*
 import io.ktor.server.auth.*
-import io.ktor.server.resources.*
 import io.ktor.server.routing.*
-import io.ktor.server.routing.openapi.describe
-import io.ktor.utils.io.ExperimentalKtorApi
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.BaseAPI.Response
 import me.nekoalice.mafia.api.contracts.CustomHttpHeaders
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.auth.*
 import me.nekoalice.mafia.api.contracts.resources.AuthResource
-import me.nekoalice.mafia.api.contracts.routes.meta.define
+import me.nekoalice.mafia.api.contracts.routes.meta.defineGroup
+import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
 import me.nekoalice.mafia.api.dto.auth.ExternalAuthCode
 import me.nekoalice.mafia.api.dto.auth.LoginData
 import me.nekoalice.mafia.api.dto.auth.RefreshToken
@@ -23,41 +21,38 @@ import kotlin.contracts.contract
 
 context(routing: Route)
 internal fun BaseAPI.applyPublicAuthRoutes() {
-    routing.define<AuthResource.Token, LoginData, _>(Post, AuthTokenDescriber) {
-        login(it)
+    routing.defineGroup<AuthResource.Token>(AuthTokenDescriber) {
+        post { body: LoginData -> login(body) }
+        patch {
+            call.request.headers[CustomHttpHeaders.XRefreshToken]
+                ?.let { refreshLogin(RefreshToken(it)) }
+                ?: Response.Error(
+                    message = "Refresh token is missing",
+                    statusCode = Unauthorized,
+                )
+        }
     }
 
-    routing.define<AuthResource.Token, _>(Patch, AuthTokenDescriber) {
-        val refreshToken = call.request.headers[CustomHttpHeaders.XRefreshToken]
-            ?: return@define Response.Error(
-                message = "Refresh token is missing",
-                statusCode = Unauthorized,
-            )
-        refreshLogin(RefreshToken(refreshToken))
-    }
-
-    routing.define<AuthResource.Telegram.Challenge, ExternalAuthCode, _>(
+    routing.defineRoute<AuthResource.Telegram.Challenge, ExternalAuthCode, _>(
         Post,
         AuthTelegramChallengeDescriber,
-    ) {
-        finishTelegramChallenge(it)
-    }
+    ) { finishTelegramChallenge(it) }
 }
 
 context(routing: Route)
 internal fun BaseAPI.applyPrivateAuthRoutes() {
-    routing.define<AuthResource.Password, LoginData, _>(Put, AuthPasswordDescriber) {
+    routing.defineRoute<AuthResource.Password, LoginData, _>(Put, AuthPasswordDescriber) {
         changePassword(it)
     }
 
-    routing.define<AuthResource.Token, _>(Delete, AuthTokenDescriber) {
+    routing.defineRoute<AuthResource.Token, _>(Delete, AuthTokenDescriber) {
         logoutAll(call.principal<UserId>()!!)
     }
 }
 
 context(routing: Route)
 internal fun BaseAPI.applyTelegramOauthRoutes(isConfigured: Boolean) {
-    routing.define<AuthResource.Telegram.Login, Unit>(Get, AuthTelegramLoginDescriber) {
+    routing.defineRoute<AuthResource.Telegram.Login, Unit>(Get, AuthTelegramLoginDescriber) {
         // This route exists only to start OAuth2 login flow, it does nothing
         if (!isConfigured)
             telegramOauthNotAvailable
@@ -65,24 +60,25 @@ internal fun BaseAPI.applyTelegramOauthRoutes(isConfigured: Boolean) {
             Response.Error("Assertion error", InternalServerError)
     }
 
-    // TODO: use `define`
-    @OptIn(ExperimentalKtorApi::class)
-    routing.resource<AuthResource.Telegram.OauthCallback> {
+    routing.defineGroup<AuthResource.Telegram.OauthCallback>(AuthTelegramOauthCallbackDescriber) {
         if (!isConfigured) {
-            get { telegramOauthNotAvailable.sendInResponseTo(call) }
-            return@resource
+            get { telegramOauthNotAvailable }
+            return@defineGroup
         }
 
         accept(ContentType.Text.Html) {
+            // [me.nekoalice.mafia.api.contracts.routes.meta.RouteGroup.get] is not available here
+            // TODO: investigate a workaround
             get {
-                telegramOauthCommon(BaseAPI::telegramOauthCallbackHtml).sendInResponseTo(call)
+                telegramOauthCommon(BaseAPI::telegramOauthCallbackHtml)
+                    .sendInResponseTo(call)
             }
         }
 
         get {
-            telegramOauthCommon(BaseAPI::telegramOauthCallback).sendInResponseTo(call)
+            telegramOauthCommon(BaseAPI::telegramOauthCallback)
         }
-    }.describe { AuthTelegramOauthCallbackDescriber.describe(Get, this) }
+    }
 }
 
 @OptIn(ExperimentalContracts::class)
