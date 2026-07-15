@@ -13,6 +13,7 @@ class ScoreboardRowRollingCounter(
     private val playCount = RoleCounter()
     private val winCount = RoleCounter()
     private var gamePointsX100: Int = 0
+    private var extraPointsX100: Int = 0
     private var bestTurnPointsX100: Int = 0
     private var ciPointsX100: Int = 0
     private var firstNightDeaths: Int = 0
@@ -22,7 +23,7 @@ class ScoreboardRowRollingCounter(
     fun countGame(
         playerRole: Role,
         winnerTeam: Team?,
-        extraPointsX100: Int = 0,
+        extraPointsX100: Int,
         wasKilledFirstNight: Boolean,
         guessedMafiaCount: Int,
     ) {
@@ -32,7 +33,7 @@ class ScoreboardRowRollingCounter(
                 "Guessed mafia count cannot be non-zero if not killed first night"
             }
         }
-        gamePointsX100 += extraPointsX100
+        this.extraPointsX100 += extraPointsX100
         playCount[playerRole] = playCount[playerRole] + 1
         totalPlayCount++
         if (winnerTeam == playerRole.team) {
@@ -75,12 +76,15 @@ class ScoreboardRowRollingCounter(
     fun toScoreboardRow(player: Player): ScoreboardRow {
         require(player.id == playerId) { "Player ID mismatch: ${player.id} != $playerId" }
         return ScoreboardRow(
-            player,
-            playCount,
-            winCount,
-            gamePointsX100,
-            ciPointsX100,
-            bestTurnPointsX100,
+            place = null,
+            player = player,
+            playCount = playCount,
+            winCount = winCount,
+            gamePointsX100 = gamePointsX100,
+            extraPointsX100 = extraPointsX100,
+            ciPointsX100 = ciPointsX100,
+            bestTurnPointsX100 = bestTurnPointsX100,
+            firstNightDeaths = firstNightDeaths,
         )
     }
 }

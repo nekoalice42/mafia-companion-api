@@ -26,6 +26,7 @@ import me.nekoalice.mafia.api.server.utils.calculateScoreboard
 import me.nekoalice.mafia.api.server.utils.generateToken
 import me.nekoalice.mafia.api.server.utils.getTelegramLoginSuccessHtml
 import me.nekoalice.mafia.api.server.utils.parseAndVerifyTelegramToken
+import me.nekoalice.mafia.api.server.utils.setPlaces
 import me.nekoalice.mafia.api.server.validation.validate
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -215,10 +216,14 @@ class APIImpl(
             .sortedWith(
                 compareByDescending<ScoreboardRow> { it.totalPointsX100 }
                     .thenByDescending { it.playCount.total }
+                    .thenByDescending { it.extraPointsX100 }
                     .thenByDescending { it.winCount.total }
+                    .thenByDescending { it.winCount.don + it.winCount.sheriff }
+                    .thenByDescending { it.firstNightDeaths }
                     .thenBy { it.player.nickname },
             )
-        return Response.Success(ResponseList(scoreboardSorted))
+        val scoreboardSortedWithPlaces = setPlaces(scoreboardSorted)
+        return Response.Success(ResponseList(scoreboardSortedWithPlaces))
     }
 
     override suspend fun telegramOauthCallbackHtml(
