@@ -26,11 +26,13 @@ fun calculateScoreboard(games: Iterable<NewGameBody>): List<ScoreboardRowRolling
 fun setPlaces(games: Iterable<ScoreboardRow>): List<ScoreboardRow> = buildList {
     var previousValue: ScoreboardRow? = null
     for (current in games) {
-        val newPlace = if (previousValue?.totalPointsX100 != current.totalPointsX100)
-            (previousValue?.place ?: 0u) + 1u
-        else
-            previousValue.place
-        add(current.copy(place = newPlace))
-        previousValue = current
+        val newPlace = when {
+            previousValue == null -> 1u
+            previousValue.totalPointsX100 != current.totalPointsX100 -> (previousValue.place ?: 0u) + 1u
+            else -> previousValue.place
+        }
+        val currentWithPlace = current.copy(place = newPlace)
+        add(currentWithPlace)
+        previousValue = currentWithPlace
     }
 }
