@@ -7,9 +7,7 @@ import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.errorResponse
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponse
-import me.nekoalice.mafia.api.contracts.openapi.descriptions.successResponseOf
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.unsupportedMethod
-import me.nekoalice.mafia.api.dto.auth.ExternalAuthChallenge
 
 internal object AuthTelegramOauthCallbackDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
@@ -22,7 +20,7 @@ internal object AuthTelegramOauthCallbackDescriber : OpenAPIResourceDescriber {
         if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
             responses {
-                successResponseOf<ExternalAuthChallenge>("Login successful") {
+                successResponse("Login successful", OK) {
                     ContentType.Text.Html {
                         schema = jsonSchema<String>()
                     }
