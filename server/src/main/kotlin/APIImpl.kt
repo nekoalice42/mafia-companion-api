@@ -2,6 +2,8 @@ package me.nekoalice.mafia.api.server
 
 import io.ktor.http.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.CannotTransformContentToTypeException
 import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
@@ -310,4 +312,13 @@ class APIImpl(
         "Telegram login flow failed: ${cause.message}",
         HttpStatusCode.ServiceUnavailable,
     )
+
+    override suspend fun onBadRequest(cause: BadRequestException): Response<Nothing> =
+        Response.Error(cause, BadRequest)
+
+    override suspend fun onBadContentType(cause: CannotTransformContentToTypeException): Response<Nothing> =
+        Response.Error(cause, UnsupportedMediaType)
+
+    override suspend fun onUnhandledException(cause: Throwable): Response<Nothing> =
+        Response.Error(cause, InternalServerError)
 }

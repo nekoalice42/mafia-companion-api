@@ -3,6 +3,8 @@ package me.nekoalice.mafia.api.contracts
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.plugins.BadRequestException
+import io.ktor.server.plugins.CannotTransformContentToTypeException
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.reflect.*
@@ -61,6 +63,12 @@ public abstract class BaseAPI(
     public abstract suspend fun handleTelegramOauthError(
         cause: AuthenticationFailedCause.Error,
     ): Response<Nothing>
+
+    public abstract suspend fun onBadRequest(cause: BadRequestException): Response<Nothing>
+    public abstract suspend fun onBadContentType(
+        cause: CannotTransformContentToTypeException,
+    ): Response<Nothing>
+    public abstract suspend fun onUnhandledException(cause: Throwable): Response<Nothing>
 
     public fun applySecureRoutesTo(routing: Route): Unit = with(routing) {
         applyPrivateAuthRoutes()
@@ -170,7 +178,7 @@ public abstract class BaseAPI(
             val statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
         ) : Response<Unused> {
             public constructor(
-                exception: Exception,
+                exception: Throwable,
                 statusCode: HttpStatusCode = HttpStatusCode.InternalServerError,
             ) : this(exception.message ?: "Unknown error", statusCode)
 
