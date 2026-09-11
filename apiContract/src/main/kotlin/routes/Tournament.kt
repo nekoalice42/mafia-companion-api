@@ -16,11 +16,11 @@ internal fun BaseAPI.applyPublicTournamentRoutes() {
     }
 
     routing.defineRoute<TournamentResource.ById, _>(Get, TournamentByIdDescriber) {
-        getTournament(it.tournament_id)
+        getTournament(it.id)
     }
 
     routing.defineRoute<TournamentResource.ById.Scoreboard, _>(Get, TournamentScoreboardDescriber) {
-        getScoreboard(it.parent.tournament_id)
+        getScoreboard(it.parent.id)
     }
 }
 
@@ -31,6 +31,6 @@ internal fun BaseAPI.applyPrivateTournamentRoutes() {
     }
 
     routing.defineRoute<TournamentResource.ById, _>(Delete, TournamentByIdDescriber) {
-        deleteTournament(it.tournament_id)
+        deleteTournament(it.id)
     }
 }

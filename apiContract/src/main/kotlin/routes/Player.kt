@@ -15,7 +15,7 @@ internal fun BaseAPI.applyPublicPlayerRoutes() {
     }
 
     routing.defineRoute<PlayerResource.ById, _>(Get, PlayerByIdDescriber) {
-        getPlayer(it.player_id)
+        getPlayer(it.id)
     }
 }
 
@@ -26,6 +26,6 @@ internal fun BaseAPI.applyPrivatePlayerRoutes() {
     }
 
     routing.defineRoute<PlayerResource.ById, _>(Delete, PlayerByIdDescriber) {
-        deletePlayer(it.player_id)
+        deletePlayer(it.id)
     }
 }

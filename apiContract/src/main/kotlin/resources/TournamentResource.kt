@@ -1,6 +1,7 @@
 package me.nekoalice.mafia.api.contracts.resources
 
 import io.ktor.resources.*
+import kotlinx.serialization.SerialName
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 
 @Resource("/tournament")
@@ -8,7 +9,7 @@ public class TournamentResource {
     @Resource("/{tournament_id}")
     public class ById(
         public val parent: TournamentResource,
-        @Suppress("PropertyName") public val tournament_id: TournamentId,
+        @SerialName("tournament_id") public val id: TournamentId,
     ) {
         @Resource("/scoreboard")
         public class Scoreboard(
