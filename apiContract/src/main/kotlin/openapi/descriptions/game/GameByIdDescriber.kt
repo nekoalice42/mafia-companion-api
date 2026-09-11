@@ -2,13 +2,14 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.game
 
 import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
+import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.*
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.GameId
 
-internal object GameDescriber : OpenAPIResourceDescriber {
+internal object GameByIdDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
-        setOf(Post)
+        setOf(Delete)
 
     override fun describe(
         method: HttpMethod,
@@ -16,14 +17,16 @@ internal object GameDescriber : OpenAPIResourceDescriber {
     ) {
         if (method !in supportedMethods) unsupportedMethod(method)
         with(builder) {
-            requestBodyOf<NewGameBody>("Game details to create")
+            parameters {
+                path("game_id") {
+                    required = true
+                    description = "Game ID to delete"
+                    schema = jsonSchema<GameId>()
+                }
+            }
             responses {
-                successResponse("Game created successfully", Created)
-                errorResponse(NotFound, "Tournament not found")
-                errorResponse(UnprocessableEntity, "Error validating the game")
-                defaultKtorBodyErrorResponsesFor<NewGameBody>()
+                successResponse("Game deleted or didn't exist before", NoContent)
             }
         }
     }
-
 }

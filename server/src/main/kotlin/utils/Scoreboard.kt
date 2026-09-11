@@ -1,10 +1,10 @@
 package me.nekoalice.mafia.api.server.utils
 
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 
-fun calculateScoreboard(games: Iterable<NewGameBody>): List<ScoreboardRowRollingCounter> {
+fun calculateScoreboard(games: Iterable<Game>): List<ScoreboardRowRollingCounter> {
     val playerCounters = mutableMapOf<PlayerId, ScoreboardRowRollingCounter>()
     for (game in games) {
         for (player in game.players) {

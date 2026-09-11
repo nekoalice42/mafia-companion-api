@@ -9,7 +9,8 @@ import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.auth.*
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.Game
+import me.nekoalice.mafia.api.dto.game.GameId
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 import me.nekoalice.mafia.api.dto.health.HelloResponse
 import me.nekoalice.mafia.api.dto.player.Player
@@ -184,10 +185,10 @@ class APIImpl(
         return Response.Success()
     }
 
-    override suspend fun createGame(game: NewGameBody): Response<Unit> {
-        if (storages.tournament.getByIdOrNull(game.tournament) == null) {
+    override suspend fun createGame(tournamentId: TournamentId, game: Game): Response<Unit> {
+        if (storages.tournament.getByIdOrNull(tournamentId) == null) {
             return Response.Error(
-                "Tournament ${game.tournament} not found",
+                "Tournament $tournamentId not found",
                 HttpStatusCode.NotFound,
             )
         }
@@ -196,8 +197,13 @@ class APIImpl(
         } catch (e: IllegalArgumentException) {
             return Response.Error(e, HttpStatusCode.UnprocessableEntity)
         }
-        storages.game.create(game)
+        storages.game.create(tournamentId, game)
         return Response.Success(HttpStatusCode.Created)
+    }
+
+    override suspend fun deleteGame(gameId: GameId): Response<Unit> {
+        storages.game.delete(gameId)
+        return Response.Success()
     }
 
     override suspend fun getScoreboard(
@@ -208,7 +214,7 @@ class APIImpl(
             "Tournament $tournamentId not found",
             HttpStatusCode.NotFound,
         )
-        val scoreboardSorted = calculateScoreboard(storages.game.getAll(tournamentId))
+        val scoreboardSorted = calculateScoreboard(storages.game.getAllByTournamentId(tournamentId))
             .map {
                 it.toScoreboardRow(
                     storages.player.getByIdOrNull(it.playerId)

@@ -15,5 +15,10 @@ public class TournamentResource {
         public class Scoreboard(
             public val parent: ById,
         )
+
+        @Resource("/game")
+        public class Game(
+            public val parent: ById,
+        )
     }
 }

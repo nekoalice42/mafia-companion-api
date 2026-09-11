@@ -6,25 +6,28 @@ import me.nekoalice.mafia.api.dao.Games
 import me.nekoalice.mafia.api.dao.InGamePlayers
 import me.nekoalice.mafia.api.dto.game.ExtraPointsDescribed
 import me.nekoalice.mafia.api.dto.game.InGamePlayer
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.Game
+import me.nekoalice.mafia.api.dto.game.GameId
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
-import org.jetbrains.exposed.v1.r2dbc.insertAndGetId
+import org.jetbrains.exposed.v1.r2dbc.deleteWhere
+import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class PostgreSQLGameStorage : GameStorage {
-    override suspend fun create(game: NewGameBody) {
+    override suspend fun create(tournamentId: TournamentId, game: Game) {
         tx {
-            val newGameId = Games.insertAndGetId {
-                it[tournamentId] = game.tournament.value
+            Games.insert {
+                it[id] = game.id.value
+                it[this.tournamentId] = tournamentId.value
                 it[winnerTeam] = game.winnerTeam?.let(::mapDtoTeam)
                 it[startedAt] = game.startTime
             }
             InGamePlayers.batchInsert(game.players.withIndex()) { (index, player) ->
-                this[InGamePlayers.gameId] = newGameId
+                this[InGamePlayers.gameId] = game.id.value
                 this[InGamePlayers.playerId] = player.playerId.value
                 this[InGamePlayers.seat] = index + 1
                 this[InGamePlayers.role] = mapDtoRole(player.role)
@@ -35,11 +38,8 @@ class PostgreSQLGameStorage : GameStorage {
         }
     }
 
-    override suspend fun getAll(tournamentId: TournamentId?): List<NewGameBody> = readonlyTx {
-        var query = Games.selectAll()
-        if (tournamentId != null) {
-            query = query.where { Games.tournamentId eq tournamentId.value }
-        }
+    override suspend fun getAllByTournamentId(tournamentId: TournamentId): List<Game> = readonlyTx {
+        val query = Games.selectAll().where { Games.tournamentId eq tournamentId.value }
         val gamesRaw = query.toList()
         gamesRaw.map { gamesResult ->
             val players = InGamePlayers.selectAll()
@@ -57,12 +57,19 @@ class PostgreSQLGameStorage : GameStorage {
                         guessedMafiaCount = playersResult[InGamePlayers.guessedMafiaCount],
                     )
                 }.toList()
-            NewGameBody(
-                tournament = TournamentId(gamesResult[Games.tournamentId].value),
+            Game(
+                id = GameId(gamesResult[Games.id].value),
                 players = players,
                 winnerTeam = gamesResult[Games.winnerTeam]?.let(::mapDaoWinnerTeam),
                 startTime = gamesResult[Games.startedAt],
             )
         }.toList()
+    }
+
+    override suspend fun delete(id: GameId) {
+        tx {
+            InGamePlayers.deleteWhere { InGamePlayers.gameId eq id.value }
+            Games.deleteWhere { Games.id eq id.value }
+        }
     }
 }

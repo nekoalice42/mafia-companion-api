@@ -10,7 +10,8 @@ import io.ktor.server.routing.*
 import io.ktor.util.reflect.*
 import me.nekoalice.mafia.api.contracts.routes.*
 import me.nekoalice.mafia.api.dto.auth.*
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.Game
+import me.nekoalice.mafia.api.dto.game.GameId
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 import me.nekoalice.mafia.api.dto.health.HelloResponse
 import me.nekoalice.mafia.api.dto.player.Player
@@ -41,7 +42,8 @@ public abstract class BaseAPI(
     public abstract suspend fun getTournament(id: TournamentId): Response<Tournament>
     public abstract suspend fun upsertTournament(tournament: Tournament): Response<Unit>
     public abstract suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit>
-    public abstract suspend fun createGame(game: NewGameBody): Response<Unit>
+    public abstract suspend fun createGame(tournamentId: TournamentId, game: Game): Response<Unit>
+    public abstract suspend fun deleteGame(gameId: GameId): Response<Unit>
     public abstract suspend fun getScoreboard(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>>

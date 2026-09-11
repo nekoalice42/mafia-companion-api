@@ -1,11 +1,11 @@
 package me.nekoalice.mafia.api.server.validation
 
-import me.nekoalice.mafia.api.dto.game.NewGameBody
+import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.game.enums.Role
 import kotlin.time.Clock
 
-fun NewGameBody.validate() {
+fun Game.validate() {
     require(players.size == 10) { "players != 10" }
     require(
         startTime < Clock.System.now()
