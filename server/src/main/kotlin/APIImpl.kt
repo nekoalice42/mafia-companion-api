@@ -96,6 +96,7 @@ class APIImpl(
         }
 
         val health = HealthResponse(
+            apiVersion = info.version,
             isDatabaseHealthy = isDatabaseHealthy,
         )
 

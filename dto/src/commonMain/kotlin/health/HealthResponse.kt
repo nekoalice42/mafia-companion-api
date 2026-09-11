@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 public data class HealthResponse(
+    val apiVersion: String,
     val isDatabaseHealthy: Boolean,
 ) {
     public val status: Boolean =
