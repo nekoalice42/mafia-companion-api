@@ -4,6 +4,7 @@ import io.ktor.server.routing.*
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentByIdDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentDescriber
+import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentGameDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentScoreboardDescriber
 import me.nekoalice.mafia.api.contracts.resources.TournamentResource
 import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
@@ -21,6 +22,10 @@ internal fun BaseAPI.applyPublicTournamentRoutes() {
 
     routing.defineRoute<TournamentResource.ById.Scoreboard, _>(Get, TournamentScoreboardDescriber) {
         getScoreboard(it.parent.id)
+    }
+
+    routing.defineRoute<TournamentResource.ById.Game, _>(Get, TournamentGameDescriber) {
+        getTournamentGames(it.parent.id)
     }
 }
 

@@ -1,10 +1,11 @@
 package me.nekoalice.mafia.api.server
 
-import io.ktor.http.*
-import io.ktor.server.auth.*
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.URLBuilder
+import io.ktor.server.auth.AuthenticationFailedCause
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.CannotTransformContentToTypeException
-import kotlinx.html.*
+import kotlinx.html.html
 import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
@@ -25,11 +26,7 @@ import me.nekoalice.mafia.api.server.storage.base.AuthStorage
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.storage.base.UserStorage
-import me.nekoalice.mafia.api.server.utils.calculateScoreboard
-import me.nekoalice.mafia.api.server.utils.generateToken
-import me.nekoalice.mafia.api.server.utils.getTelegramLoginSuccessHtml
-import me.nekoalice.mafia.api.server.utils.parseAndVerifyTelegramToken
-import me.nekoalice.mafia.api.server.utils.setPlaces
+import me.nekoalice.mafia.api.server.utils.*
 import me.nekoalice.mafia.api.server.validation.validate
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -176,6 +173,16 @@ class APIImpl(
         storages.tournament.getByIdOrNull(id)?.let {
             Response.Success(it)
         } ?: Response.Error("Tournament not found", HttpStatusCode.NotFound)
+
+    override suspend fun getTournamentGames(tournamentId: TournamentId): Response<ResponseList<Game>> {
+        if (storages.tournament.getByIdOrNull(tournamentId) == null) {
+            return Response.Error(
+                "Tournament $tournamentId not found",
+                HttpStatusCode.NotFound,
+            )
+        }
+        return Response.Success(ResponseList(storages.game.getAllByTournamentId(tournamentId)))
+    }
 
     override suspend fun upsertTournament(tournament: Tournament): Response<Unit> =
         upsert(storages.tournament, tournament, tournament.id)

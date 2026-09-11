@@ -40,6 +40,7 @@ public abstract class BaseAPI(
     public abstract suspend fun deletePlayer(playerId: PlayerId): Response<Unit>
     public abstract suspend fun getTournaments(): Response<ResponseList<Tournament>>
     public abstract suspend fun getTournament(id: TournamentId): Response<Tournament>
+    public abstract suspend fun getTournamentGames(tournamentId: TournamentId): Response<ResponseList<Game>>
     public abstract suspend fun upsertTournament(tournament: Tournament): Response<Unit>
     public abstract suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit>
     public abstract suspend fun createGame(tournamentId: TournamentId, game: Game): Response<Unit>
