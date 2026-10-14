@@ -10,13 +10,19 @@ import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.dto.auth.*
+import me.nekoalice.mafia.api.dto.base.CRUDModel
+import me.nekoalice.mafia.api.dto.base.InputCRUDModel
 import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.game.GameId
+import me.nekoalice.mafia.api.dto.game.InputGame
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 import me.nekoalice.mafia.api.dto.health.HelloResponse
+import me.nekoalice.mafia.api.dto.player.InputPlayer
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.response.NewResourceId
 import me.nekoalice.mafia.api.dto.response.ResponseList
+import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
@@ -52,14 +58,22 @@ class APIImpl(
         productionUrl = urls.prod,
     ),
 ) {
-    private suspend fun <StorageT : CRUDStorage<ItemT, IdT>, ItemT, IdT> upsert(
+    private suspend fun <
+            StorageT : CRUDStorage<ItemT, InputItemT, IdT>,
+            ItemT : CRUDModel<IdT>,
+            InputItemT : InputCRUDModel<ItemT, IdT>,
+            IdT,
+            > update(
         storage: StorageT,
-        item: ItemT,
+        item: InputItemT,
         id: IdT,
+        itemName: String,
     ): Response<Unit> {
-        val existed = storage.getByIdOrNull(id) != null
-        storage.editOrAdd(id, item)
-        return if (existed) Response.Success() else Response.Success(HttpStatusCode.Created)
+        if (storage.getByIdOrNull(id) == null) {
+            return Response.Error("$itemName with id '$id' not found", NotFound)
+        }
+        storage.edit(id, item)
+        return Response.Success()
     }
 
     private suspend fun createTokenPair(userId: UserId): TokenPair {
@@ -156,10 +170,15 @@ class APIImpl(
     override suspend fun getPlayer(playerId: PlayerId): Response<Player> =
         storages.player.getByIdOrNull(playerId)?.let {
             Response.Success(it)
-        } ?: Response.Error("Player not found", HttpStatusCode.NotFound)
+        } ?: Response.Error("Player not found", NotFound)
 
-    override suspend fun upsertPlayer(player: Player): Response<Unit> =
-        upsert(storages.player, player, player.id)
+    override suspend fun createPlayer(player: InputPlayer): Response<NewResourceId> {
+        val id = storages.player.add(player)
+        return Response.Success(NewResourceId(id), Created)
+    }
+
+    override suspend fun updatePlayer(playerId: PlayerId, player: InputPlayer): Response<Unit> =
+        update(storages.player, player, playerId, "Player")
 
     override suspend fun deletePlayer(playerId: PlayerId): Response<Unit> {
         storages.player.delete(playerId)
@@ -173,40 +192,53 @@ class APIImpl(
     override suspend fun getTournament(id: TournamentId): Response<Tournament> =
         storages.tournament.getByIdOrNull(id)?.let {
             Response.Success(it)
-        } ?: Response.Error("Tournament not found", HttpStatusCode.NotFound)
+        } ?: Response.Error("Tournament not found", NotFound)
 
-    override suspend fun getTournamentGames(tournamentId: TournamentId): Response<ResponseList<Game>> {
+    override suspend fun getTournamentGames(
+        tournamentId: TournamentId,
+    ): Response<ResponseList<Game>> {
         if (storages.tournament.getByIdOrNull(tournamentId) == null) {
             return Response.Error(
                 "Tournament $tournamentId not found",
-                HttpStatusCode.NotFound,
+                NotFound,
             )
         }
         return Response.Success(ResponseList(storages.game.getAllByTournamentId(tournamentId)))
     }
 
-    override suspend fun upsertTournament(tournament: Tournament): Response<Unit> =
-        upsert(storages.tournament, tournament, tournament.id)
+    override suspend fun createTournament(tournament: InputTournament): Response<NewResourceId> {
+        val id = storages.tournament.add(tournament)
+        return Response.Success(NewResourceId(id), Created)
+    }
+
+    override suspend fun updateTournament(
+        tournamentId: TournamentId,
+        tournament: InputTournament,
+    ): Response<Unit> =
+        update(storages.tournament, tournament, tournamentId, "Tournament")
 
     override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
         storages.tournament.delete(tournamentId)
         return Response.Success()
     }
 
-    override suspend fun createGame(tournamentId: TournamentId, game: Game): Response<Unit> {
+    override suspend fun createGame(
+        tournamentId: TournamentId,
+        game: InputGame,
+    ): Response<NewResourceId> {
         if (storages.tournament.getByIdOrNull(tournamentId) == null) {
             return Response.Error(
                 "Tournament $tournamentId not found",
-                HttpStatusCode.NotFound,
+                NotFound,
             )
         }
         try {
             game.validate()
         } catch (e: IllegalArgumentException) {
-            return Response.Error(e, HttpStatusCode.UnprocessableEntity)
+            return Response.Error(e, UnprocessableEntity)
         }
-        storages.game.create(tournamentId, game)
-        return Response.Success(HttpStatusCode.Created)
+        val id = storages.game.create(tournamentId, game)
+        return Response.Success(NewResourceId(id), Created)
     }
 
     override suspend fun deleteGame(gameId: GameId): Response<Unit> {
@@ -220,7 +252,7 @@ class APIImpl(
         @Suppress("RETURN_VALUE_NOT_USED")
         storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
             "Tournament $tournamentId not found",
-            HttpStatusCode.NotFound,
+            NotFound,
         )
         val scoreboardSorted = calculateScoreboard(storages.game.getAllByTournamentId(tournamentId))
             .map {

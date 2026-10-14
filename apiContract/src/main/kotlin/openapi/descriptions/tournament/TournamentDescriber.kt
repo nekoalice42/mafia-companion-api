@@ -4,19 +4,21 @@ import io.ktor.http.HttpMethod
 import io.ktor.openapi.Operation
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.*
+import me.nekoalice.mafia.api.dto.response.NewResourceId
 import me.nekoalice.mafia.api.dto.response.ResponseList
+import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 
 internal object TournamentDescriber : OpenAPIResourceDescriber {
     override val supportedMethods: Set<HttpMethod> =
-        setOf(Get, Put)
+        setOf(Get, Post)
 
     override fun describe(
         method: HttpMethod,
         builder: Operation.Builder,
     ) = when (method) {
         Get -> describeGet(builder)
-        Put -> describePut(builder)
+        Post -> describePost(builder)
         else -> unsupportedMethod(method)
     }
 
@@ -26,12 +28,11 @@ internal object TournamentDescriber : OpenAPIResourceDescriber {
         }
     }
 
-    private fun describePut(builder: Operation.Builder) = builder.run {
-        requestBodyOf<Tournament>("Tournament details to upsert")
+    private fun describePost(builder: Operation.Builder) = builder.run {
+        requestBodyOf<InputTournament>("Tournament details to create")
         responses {
-            successResponse("Tournament created", Created)
-            successResponse("Tournament updated", NoContent)
-            defaultKtorBodyErrorResponsesFor<Tournament>()
+            successResponseOf<NewResourceId>("Tournament created", Created)
+            defaultKtorBodyErrorResponsesFor<InputTournament>()
         }
     }
 }

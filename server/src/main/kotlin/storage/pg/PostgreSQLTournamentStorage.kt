@@ -4,15 +4,30 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.dao.Tournaments
+import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.TournamentStorage
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
+import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
-import org.jetbrains.exposed.v1.r2dbc.upsert
+import org.jetbrains.exposed.v1.r2dbc.update
 
 class PostgreSQLTournamentStorage : TournamentStorage {
+    override suspend fun add(item: InputTournament): TournamentId {
+        val id = TournamentId.new()
+        tx {
+            Tournaments.insert {
+                it[this.id] = id.value
+                it[name] = item.name
+                it[startsAt] = item.startDate
+                it[endsAt] = item.endDate
+            }
+        }
+        return id
+    }
+
     override suspend fun getByIdOrNull(id: TournamentId): Tournament? = readonlyTx {
         Tournaments.selectAll()
             .where { Tournaments.id eq id.value }
@@ -20,13 +35,13 @@ class PostgreSQLTournamentStorage : TournamentStorage {
             .singleOrNull()
     }
 
-    override suspend fun editOrAdd(id: TournamentId, item: Tournament) {
+    override suspend fun edit(id: TournamentId, item: InputTournament) {
         tx {
-            Tournaments.upsert(Tournaments.id) {
-                it[Tournaments.id] = id.value
-                it[Tournaments.name] = item.name
-                it[Tournaments.startsAt] = item.startDate
-                it[Tournaments.endsAt] = item.endDate
+            Tournaments.update(where = { Tournaments.id eq id.value }) {
+                it[this.id] = id.value
+                it[name] = item.name
+                it[startsAt] = item.startDate
+                it[endsAt] = item.endDate
             }
         }
     }

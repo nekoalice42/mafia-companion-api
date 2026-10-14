@@ -1,5 +1,6 @@
 package me.nekoalice.mafia.api.contracts.routes
 
+import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.server.routing.*
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentByIdDescriber
@@ -8,7 +9,8 @@ import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.Tourname
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentScoreboardDescriber
 import me.nekoalice.mafia.api.contracts.resources.TournamentResource
 import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
-import me.nekoalice.mafia.api.dto.tournament.Tournament
+import me.nekoalice.mafia.api.dto.game.InputGame
+import me.nekoalice.mafia.api.dto.tournament.InputTournament
 
 context(routing: Route)
 internal fun BaseAPI.applyPublicTournamentRoutes() {
@@ -31,11 +33,21 @@ internal fun BaseAPI.applyPublicTournamentRoutes() {
 
 context(routing: Route)
 internal fun BaseAPI.applyPrivateTournamentRoutes() {
-    routing.defineRoute<TournamentResource, Tournament, _>(Put, TournamentDescriber) {
-        upsertTournament(it)
+    routing.defineRoute<TournamentResource, InputTournament, _>(Post, TournamentDescriber) {
+        createTournament(it)
     }
+
+    routing.defineRoute<TournamentResource.ById, InputTournament, _>(
+        Put,
+        TournamentByIdDescriber,
+    ) { res, tournament -> updateTournament(res.id, tournament) }
 
     routing.defineRoute<TournamentResource.ById, _>(Delete, TournamentByIdDescriber) {
         deleteTournament(it.id)
     }
+
+    routing.defineRoute<TournamentResource.ById.Game, InputGame, _>(
+        Post,
+        TournamentGameDescriber,
+    ) { res, game -> createGame(res.parent.id, game) }
 }

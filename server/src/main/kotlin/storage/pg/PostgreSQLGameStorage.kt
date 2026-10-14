@@ -8,6 +8,7 @@ import me.nekoalice.mafia.api.dto.game.ExtraPointsDescribed
 import me.nekoalice.mafia.api.dto.game.InGamePlayer
 import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.game.GameId
+import me.nekoalice.mafia.api.dto.game.InputGame
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
@@ -18,16 +19,17 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
 class PostgreSQLGameStorage : GameStorage {
-    override suspend fun create(tournamentId: TournamentId, game: Game) {
+    override suspend fun create(tournamentId: TournamentId, game: InputGame): GameId {
+        val id = GameId.new()
         tx {
             Games.insert {
-                it[id] = game.id.value
+                it[this.id] = id.value
                 it[this.tournamentId] = tournamentId.value
                 it[winnerTeam] = game.winnerTeam?.let(::mapDtoTeam)
                 it[startedAt] = game.startTime
             }
             InGamePlayers.batchInsert(game.players.withIndex()) { (index, player) ->
-                this[InGamePlayers.gameId] = game.id.value
+                this[InGamePlayers.gameId] = id.value
                 this[InGamePlayers.playerId] = player.playerId.value
                 this[InGamePlayers.seat] = index + 1
                 this[InGamePlayers.role] = mapDtoRole(player.role)
@@ -36,6 +38,7 @@ class PostgreSQLGameStorage : GameStorage {
                 this[InGamePlayers.guessedMafiaCount] = player.guessedMafiaCount
             }
         }
+        return id
     }
 
     override suspend fun getAllByTournamentId(tournamentId: TournamentId): List<Game> = readonlyTx {

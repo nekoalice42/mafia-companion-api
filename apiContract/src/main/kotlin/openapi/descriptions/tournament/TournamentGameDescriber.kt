@@ -10,6 +10,8 @@ import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.*
 import me.nekoalice.mafia.api.dto.game.Game
+import me.nekoalice.mafia.api.dto.game.InputGame
+import me.nekoalice.mafia.api.dto.response.NewResourceId
 import me.nekoalice.mafia.api.dto.response.ResponseList
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 
@@ -48,12 +50,12 @@ internal object TournamentGameDescriber : OpenAPIResourceDescriber {
                 schema = jsonSchema<TournamentId>()
             }
         }
-        requestBodyOf<Game>("Game details to create")
+        requestBodyOf<InputGame>("Game details to create")
         responses {
-            successResponse("Game created successfully", Created)
+            successResponseOf<NewResourceId>("Game created successfully", Created)
             errorResponse(NotFound, "Tournament not found")
             errorResponse(UnprocessableEntity, "Error validating the game")
-            defaultKtorBodyErrorResponsesFor<Game>()
+            defaultKtorBodyErrorResponsesFor<InputGame>()
         }
     }
 }

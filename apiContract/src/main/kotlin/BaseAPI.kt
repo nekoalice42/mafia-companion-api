@@ -1,23 +1,33 @@
 package me.nekoalice.mafia.api.contracts
 
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.auth.*
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.withCharset
+import io.ktor.server.application.ApplicationCall
+import io.ktor.server.auth.AuthenticationFailedCause
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.CannotTransformContentToTypeException
-import io.ktor.server.response.*
-import io.ktor.server.routing.*
-import io.ktor.util.reflect.*
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondRedirect
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
+import io.ktor.util.reflect.TypeInfo
+import io.ktor.util.reflect.typeInfo
 import me.nekoalice.mafia.api.contracts.routes.*
 import me.nekoalice.mafia.api.dto.auth.*
 import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.game.GameId
+import me.nekoalice.mafia.api.dto.game.InputGame
 import me.nekoalice.mafia.api.dto.health.HealthResponse
 import me.nekoalice.mafia.api.dto.health.HelloResponse
+import me.nekoalice.mafia.api.dto.player.InputPlayer
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.response.ErrorResponse
+import me.nekoalice.mafia.api.dto.response.NewResourceId
 import me.nekoalice.mafia.api.dto.response.ResponseList
+import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
@@ -36,14 +46,34 @@ public abstract class BaseAPI(
     public abstract suspend fun logoutAll(userId: UserId): Response<Unit>
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
     public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
-    public abstract suspend fun upsertPlayer(player: Player): Response<Unit>
+    public abstract suspend fun createPlayer(player: InputPlayer): Response<NewResourceId>
+    public abstract suspend fun updatePlayer(
+        playerId: PlayerId,
+        player: InputPlayer,
+    ): Response<Unit>
+
     public abstract suspend fun deletePlayer(playerId: PlayerId): Response<Unit>
     public abstract suspend fun getTournaments(): Response<ResponseList<Tournament>>
     public abstract suspend fun getTournament(id: TournamentId): Response<Tournament>
-    public abstract suspend fun getTournamentGames(tournamentId: TournamentId): Response<ResponseList<Game>>
-    public abstract suspend fun upsertTournament(tournament: Tournament): Response<Unit>
+    public abstract suspend fun getTournamentGames(
+        tournamentId: TournamentId,
+    ): Response<ResponseList<Game>>
+
+    public abstract suspend fun createTournament(
+        tournament: InputTournament,
+    ): Response<NewResourceId>
+
+    public abstract suspend fun updateTournament(
+        tournamentId: TournamentId,
+        tournament: InputTournament,
+    ): Response<Unit>
+
     public abstract suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit>
-    public abstract suspend fun createGame(tournamentId: TournamentId, game: Game): Response<Unit>
+    public abstract suspend fun createGame(
+        tournamentId: TournamentId,
+        game: InputGame,
+    ): Response<NewResourceId>
+
     public abstract suspend fun deleteGame(gameId: GameId): Response<Unit>
     public abstract suspend fun getScoreboard(
         tournamentId: TournamentId,
@@ -71,6 +101,7 @@ public abstract class BaseAPI(
     public abstract suspend fun onBadContentType(
         cause: CannotTransformContentToTypeException,
     ): Response<Nothing>
+
     public abstract suspend fun onUnhandledException(cause: Throwable): Response<Nothing>
 
     public fun applySecureRoutesTo(routing: Route): Unit = with(routing) {
@@ -126,7 +157,7 @@ public abstract class BaseAPI(
                 require(
                     response != null && typeInfo != null
                             || response == null && typeInfo == null,
-                ) { "Response=${response} and typeInfo=${typeInfo} must be both null or both non-null" }
+                ) { "'response' and 'typeInfo' must be both null or both non-null" }
             }
 
             private val isEmptyResponse = response == null

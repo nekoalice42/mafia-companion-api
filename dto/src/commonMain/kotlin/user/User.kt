@@ -1,9 +1,10 @@
 package me.nekoalice.mafia.api.dto.user
 
 import kotlinx.serialization.Serializable
+import me.nekoalice.mafia.api.dto.base.CRUDModel
 
 @Serializable
 public data class User(
-    val id: UserId,
+    override val id: UserId,
     val username: String,
-)
+) : CRUDModel<UserId>
