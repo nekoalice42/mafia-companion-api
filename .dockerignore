@@ -1,10 +1,13 @@
 .git/
 .github/
+.gradle/
 .idea/
 .kotlin/
 .vscode/
 compose.yaml.d/
 **/build/
+gradle/wrapper/
 .env
 .gitignore
+gradlew*
 compose.yaml
