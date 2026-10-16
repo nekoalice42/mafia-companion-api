@@ -1,3 +1,6 @@
 settings:
   kotlin:
     explicitApi: strict
+    # Workaround for https://youtrack.jetbrains.com/issue/KTC-6049
+    freeCompilerArgs:
+      - -Xexplicit-api=strict
