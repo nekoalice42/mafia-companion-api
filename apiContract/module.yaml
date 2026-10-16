@@ -1,0 +1,14 @@
+product: jvm/lib
+
+apply:
+  - //module-templates/common.module-template.yaml
+  - //module-templates/library.module-template.yaml
+  - //module-templates/serialization.module-template.yaml
+  - //module-templates/ktor.module-template.yaml
+
+dependencies:
+  - //dto
+  - $ktor.server.auth
+  - $ktor.server.resources
+  - $libs.ktor.server.routing.openapi
+  - $libs.kotlinx.datetime

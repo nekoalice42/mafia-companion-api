@@ -1,0 +1,4 @@
+dependencies:
+  - $libs.exposed.core
+  - $libs.exposed.r2dbc
+  - $libs.exposed.kotlin.datetime

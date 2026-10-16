@@ -1,0 +1,6 @@
+settings:
+  kotlin:
+    serialization:
+      enabled: true
+      format: json
+      version: 1.11.0

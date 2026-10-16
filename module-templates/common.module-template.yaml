@@ -1,0 +1,11 @@
+settings:
+  kotlin:
+    version: "2.4.0"
+    freeCompilerArgs:
+      # Enables compiler warnings when return values are discarded.
+      - -Xreturn-value-checker=full
+      # Enable `returnsResultOf()` contract
+      - -Xallow-returns-result-of
+      # Allows the compiler to resolve enum entries and sealed class members
+      # from their expected types without fully qualifying their names.
+      - -Xcontext-sensitive-resolution

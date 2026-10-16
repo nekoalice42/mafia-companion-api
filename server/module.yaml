@@ -1,0 +1,40 @@
+product: jvm/app
+
+apply:
+  - //module-templates/common.module-template.yaml
+  - //module-templates/serialization.module-template.yaml
+  - //module-templates/ktor.module-template.yaml
+  - //module-templates/exposed.module-template.yaml
+
+dependencies:
+  - //apiContract
+  - //dao
+  - //dto
+  # Ktor server runtime
+  - $ktor.server.netty: runtime-only
+  # Ktor core server libraries
+  - $ktor.server.core
+  - $ktor.server.config.yaml
+  # Ktor server plugins
+  - $ktor.serialization.kotlinx.json
+  - $ktor.server.auth
+  - $ktor.server.auth.jwt
+  - $ktor.server.contentNegotiation
+  - $ktor.server.cors
+  - $ktor.server.htmlBuilder
+  - $ktor.server.resources
+  - $libs.ktor.server.routing.openapi
+  - $ktor.server.statusPages
+  # Ktor client libraries for Telegram OAuth
+  - $ktor.client.core
+  - $ktor.client.cio
+  - $ktor.client.contentNegotiation
+  # Other dependencies
+  - $libs.kotlinx.datetime
+  - $libs.password4j
+  - $libs.postgresql.r2dbc: runtime-only
+  - $libs.logback: runtime-only
+
+settings:
+  jvm:
+    mainClass: io.ktor.server.netty.EngineMain

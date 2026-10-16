@@ -1,0 +1,14 @@
+product:
+  type: kmp/lib
+  platforms:
+    - jvm
+#    - js
+#    - wasmJs
+
+apply:
+  - //module-templates/common.module-template.yaml
+  - //module-templates/library.module-template.yaml
+  - //module-templates/serialization.module-template.yaml
+
+dependencies:
+  - $libs.kotlinx.datetime

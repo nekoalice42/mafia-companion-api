@@ -1,0 +1,7 @@
+modules:
+  - apiContract
+  - cleaner
+  - dao
+  - dto
+  - migrations
+  - server

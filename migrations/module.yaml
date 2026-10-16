@@ -1,0 +1,10 @@
+product: jvm/app
+
+apply:
+  - //module-templates/common.module-template.yaml
+  - //module-templates/exposed.module-template.yaml
+
+dependencies:
+  - $libs.password4j
+  - $libs.logback: runtime-only
+  - $libs.postgresql.r2dbc: runtime-only
