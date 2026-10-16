@@ -1,6 +1,6 @@
 settings:
   kotlin:
-    version: "2.4.0"
+    version: "2.4.21"
     freeCompilerArgs:
       # Enables compiler warnings when return values are discarded.
       - -Xreturn-value-checker=full
