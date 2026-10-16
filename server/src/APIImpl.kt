@@ -5,6 +5,8 @@ import io.ktor.http.URLBuilder
 import io.ktor.server.auth.AuthenticationFailedCause
 import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.CannotTransformContentToTypeException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.html.html
 import kotlinx.html.stream.appendHTML
 import me.nekoalice.mafia.api.contracts.APIInfo
@@ -106,6 +108,7 @@ class APIImpl(
             storages.ping()
             true
         } catch (_: Exception) {
+            currentCoroutineContext().ensureActive()
             false
         }
 

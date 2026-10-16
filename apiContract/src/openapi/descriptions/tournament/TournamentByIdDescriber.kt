@@ -3,8 +3,6 @@ package me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Delete
 import io.ktor.http.HttpMethod.Companion.Get
-import io.ktor.http.HttpStatusCode.Companion.NoContent
-import io.ktor.http.HttpStatusCode.Companion.NotFound
 import io.ktor.openapi.Operation
 import io.ktor.openapi.jsonSchema
 import me.nekoalice.mafia.api.contracts.openapi.OpenAPIResourceDescriber

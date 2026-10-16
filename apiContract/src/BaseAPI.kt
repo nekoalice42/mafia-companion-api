@@ -104,7 +104,7 @@ public abstract class BaseAPI(
 
     public abstract suspend fun onUnhandledException(cause: Throwable): Response<Nothing>
 
-    public fun applySecureRoutesTo(routing: Route): Unit = with(routing) {
+    public fun applySecureRoutesTo(routing: Route): Unit = context(routing) {
         applyPrivateAuthRoutes()
         applyPrivateGameRoutes()
         applyPrivatePlayerRoutes()
@@ -112,7 +112,7 @@ public abstract class BaseAPI(
         applyPrivateUserRoutes()
     }
 
-    public fun applyPublicRoutesTo(routing: Route): Unit = with(routing) {
+    public fun applyPublicRoutesTo(routing: Route): Unit = context(routing) {
         applyPublicAuthRoutes()
         applyPublicHealthRoutes()
         applyPublicOpenAPIJSONRoutes()
@@ -121,20 +121,20 @@ public abstract class BaseAPI(
         applyPublicTournamentRoutes()
     }
 
-    public fun applyTelegramOauthRoutesTo(routing: Route): Unit = with(routing) {
+    public fun applyTelegramOauthRoutesTo(routing: Route): Unit = context(routing) {
         applyTelegramOauthRoutes(isConfigured = true)
     }
 
-    public fun applyUnavailableTelegramOauthRoutesTo(routing: Route): Unit = with(routing) {
+    public fun applyUnavailableTelegramOauthRoutesTo(routing: Route): Unit = context(routing) {
         applyTelegramOauthRoutes(isConfigured = false)
     }
 
     public val requiredMethods: List<HttpMethod> = listOf(
-        HttpMethod.Get,
-        HttpMethod.Post,
-        HttpMethod.Put,
-        HttpMethod.Patch,
-        HttpMethod.Delete,
+        Get,
+        Post,
+        Put,
+        Patch,
+        Delete,
     )
 
     public val requiredHeaders: List<String> = listOf(
