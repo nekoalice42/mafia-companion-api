@@ -1,18 +1,16 @@
 package me.nekoalice.mafia.api.server.storage.pg
 
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.groupBy
 import kotlinx.coroutines.flow.toList
 import me.nekoalice.mafia.api.dao.Games
 import me.nekoalice.mafia.api.dao.InGamePlayers
-import me.nekoalice.mafia.api.dto.game.ExtraPointsDescribed
-import me.nekoalice.mafia.api.dto.game.InGamePlayer
 import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.game.GameId
 import me.nekoalice.mafia.api.dto.game.InputGame
-import me.nekoalice.mafia.api.dto.player.PlayerId
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
@@ -42,31 +40,21 @@ class PostgreSQLGameStorage : GameStorage {
     }
 
     override suspend fun getAllByTournamentId(tournamentId: TournamentId): List<Game> = readonlyTx {
-        val query = Games.selectAll().where { Games.tournamentId eq tournamentId.value }
-        val gamesRaw = query.toList()
-        gamesRaw.map { gamesResult ->
-            val players = InGamePlayers.selectAll()
-                .where { InGamePlayers.gameId eq gamesResult[Games.id] }
-                .orderBy(InGamePlayers.seat)
-                .map { playersResult ->
-                    InGamePlayer(
-                        playerId = PlayerId(playersResult[InGamePlayers.playerId].value),
-                        role = mapDaoRole(playersResult[InGamePlayers.role]),
-                        extraPoints = if (playersResult[InGamePlayers.extraPoints] != null)
-                            ExtraPointsDescribed(
-                                pointsX100 = playersResult[InGamePlayers.extraPoints]!!,
-                                description = playersResult[InGamePlayers.extraPointsDescription]!!,
-                            ) else null,
-                        guessedMafiaCount = playersResult[InGamePlayers.guessedMafiaCount],
-                    )
-                }.toList()
-            Game(
-                id = GameId(gamesResult[Games.id].value),
-                players = players,
-                winnerTeam = gamesResult[Games.winnerTeam]?.let(::mapDaoWinnerTeam),
-                startTime = gamesResult[Games.startedAt],
+        val games = Games.selectAll()
+            .where { Games.tournamentId eq tournamentId.value }
+            .toList()
+        if (games.isEmpty()) return@readonlyTx emptyList()
+
+        val gameIds = games.map { it[Games.id].value }
+        val playersByGame = InGamePlayers.selectAll()
+            .where { InGamePlayers.gameId inList gameIds }
+            .orderBy(InGamePlayers.seat)
+            .groupBy(
+                { it[InGamePlayers.gameId].value },
+                ::inGamePlayerFromDao,
             )
-        }.toList()
+
+        games.map { gameFromDao(it, playersByGame[it[Games.id].value]!!) }
     }
 
     override suspend fun delete(id: GameId) {

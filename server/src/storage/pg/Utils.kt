@@ -1,6 +1,10 @@
 package me.nekoalice.mafia.api.server.storage.pg
 
 import me.nekoalice.mafia.api.dao.*
+import me.nekoalice.mafia.api.dto.game.ExtraPointsDescribed
+import me.nekoalice.mafia.api.dto.game.Game
+import me.nekoalice.mafia.api.dto.game.GameId
+import me.nekoalice.mafia.api.dto.game.InGamePlayer
 import me.nekoalice.mafia.api.dto.game.enums.Team
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
@@ -55,6 +59,24 @@ internal fun mapDaoRole(role: DaoRole): DtoRole = when (role) {
     SHERIFF -> Sheriff
     CITIZEN -> Citizen
 }
+
+internal fun gameFromDao(row: ResultRow, players: List<InGamePlayer>) = Game(
+    id = GameId(row[Games.id].value),
+    players = players,
+    winnerTeam = row[Games.winnerTeam]?.let(::mapDaoWinnerTeam),
+    startTime = row[Games.startedAt],
+)
+
+internal fun inGamePlayerFromDao(row: ResultRow) = InGamePlayer(
+    playerId = PlayerId(row[InGamePlayers.playerId].value),
+    role = mapDaoRole(row[InGamePlayers.role]),
+    extraPoints = if (row[InGamePlayers.extraPoints] != null)
+        ExtraPointsDescribed(
+            pointsX100 = row[InGamePlayers.extraPoints]!!,
+            description = row[InGamePlayers.extraPointsDescription]!!,
+        ) else null,
+    guessedMafiaCount = row[InGamePlayers.guessedMafiaCount],
+)
 
 internal fun playerFromDao(row: ResultRow): Player =
     Player(
