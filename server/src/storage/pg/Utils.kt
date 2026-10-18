@@ -8,6 +8,7 @@ import me.nekoalice.mafia.api.dto.game.InGamePlayer
 import me.nekoalice.mafia.api.dto.game.enums.Team
 import me.nekoalice.mafia.api.dto.player.Player
 import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.tournament.PlayerStartingPoints
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.user.User
@@ -84,13 +85,21 @@ internal fun playerFromDao(row: ResultRow): Player =
         nickname = row[Players.nickname],
     )
 
-internal fun tournamentFromDao(row: ResultRow): Tournament =
-    Tournament(
-        id = TournamentId(row[Tournaments.id].value),
-        name = row[Tournaments.name],
-        startDate = row[Tournaments.startsAt],
-        endDate = row[Tournaments.endsAt],
-    )
+internal fun playerStartingPointsFromDao(row: ResultRow) = PlayerStartingPoints(
+    playerId = PlayerId(row[TournamentPlayers.playerId].value),
+    startingPointsX100 = row[TournamentPlayers.startingPoints],
+)
+
+internal fun tournamentFromDao(
+    row: ResultRow,
+    participatingPlayers: List<PlayerStartingPoints>,
+) = Tournament(
+    id = TournamentId(row[Tournaments.id].value),
+    name = row[Tournaments.name],
+    startDate = row[Tournaments.startsAt],
+    endDate = row[Tournaments.endsAt],
+    participatingPlayers = participatingPlayers,
+)
 
 internal fun userFromDao(row: ResultRow): User =
     User(

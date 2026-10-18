@@ -9,6 +9,7 @@ import me.nekoalice.mafia.api.dto.game.enums.Team
 
 class ScoreboardRowRollingCounter(
     val playerId: PlayerId,
+    val startingPointsX100: Int,
 ) {
     private val playCount = RoleCounter()
     private val winCount = RoleCounter()
@@ -80,6 +81,7 @@ class ScoreboardRowRollingCounter(
             player = player,
             playCount = playCount,
             winCount = winCount,
+            startingPointsX100 = startingPointsX100,
             gamePointsX100 = gamePointsX100,
             extraPointsX100 = extraPointsX100,
             ciPointsX100 = ciPointsX100,

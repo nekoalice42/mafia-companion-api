@@ -2,14 +2,34 @@ package me.nekoalice.mafia.api.server.utils
 
 import me.nekoalice.mafia.api.dto.game.Game
 import me.nekoalice.mafia.api.dto.player.PlayerId
+import me.nekoalice.mafia.api.dto.tournament.PlayerStartingPoints
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
 
-fun calculateScoreboard(games: Iterable<Game>): List<ScoreboardRowRollingCounter> {
+fun calculateScoreboard(
+    games: Iterable<Game>,
+    startingPoints: List<PlayerStartingPoints>?,
+): List<ScoreboardRowRollingCounter> {
     val playerCounters = mutableMapOf<PlayerId, ScoreboardRowRollingCounter>()
+    val playerToStartingPoints = startingPoints?.associate {
+        it.playerId to it
+    } ?: emptyMap()
+    playerCounters.putAll(
+        playerToStartingPoints.mapValues {
+            ScoreboardRowRollingCounter(
+                playerId = it.key,
+                startingPointsX100 = it.value.startingPointsX100,
+            )
+        }
+    )
     for (game in games) {
         for (player in game.players) {
             playerCounters
-                .getOrPut(player.playerId) { ScoreboardRowRollingCounter(player.playerId) }
+                .getOrPut(player.playerId) {
+                    ScoreboardRowRollingCounter(
+                        player.playerId,
+                        playerToStartingPoints[player.playerId]?.startingPointsX100 ?: 0,
+                    )
+                }
                 .countGame(
                     playerRole = player.role,
                     winnerTeam = game.winnerTeam,

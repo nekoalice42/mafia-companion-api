@@ -9,6 +9,7 @@ public data class ScoreboardRow(
     val player: Player,
     val playCount: RoleCounter,
     val winCount: RoleCounter,
+    val startingPointsX100: Int,
     val gamePointsX100: Int,
     val extraPointsX100: Int,
     val ciPointsX100: Int,
@@ -16,5 +17,11 @@ public data class ScoreboardRow(
     val firstNightDeaths: Int,
 ) {
     val totalPointsX100: Int
-        get() = gamePointsX100 + extraPointsX100 + ciPointsX100 + bestTurnPointsX100
+        get() = (
+                startingPointsX100
+                        + gamePointsX100
+                        + extraPointsX100
+                        + ciPointsX100
+                        + bestTurnPointsX100
+                )
 }

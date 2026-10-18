@@ -9,11 +9,13 @@ public data class InputTournament(
     val name: String,
     val startDate: Instant,
     val endDate: Instant?,
+    val participatingPlayers: List<PlayerStartingPoints>,
 ) : InputCRUDModel<Tournament, TournamentId> {
     override fun toModel(id: TournamentId): Tournament = Tournament(
         id = id,
         name = name,
         startDate = startDate,
         endDate = endDate,
+        participatingPlayers = participatingPlayers,
     )
 }

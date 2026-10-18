@@ -17,6 +17,7 @@ val migrations = listOf(
     V06AddAuthCodes,
     V07ChangeTokensPK,
     V08NullableWinnerTeam,
+    V09TournamentPlayers,
 )
 
 val logger: Logger = LoggerFactory.getLogger("Migrations")

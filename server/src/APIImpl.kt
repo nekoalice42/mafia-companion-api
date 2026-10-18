@@ -53,7 +53,7 @@ class APIImpl(
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-beta.2",
+        version = "0.1.0-beta.3",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = urls.dev,
         stagingUrl = urls.stage,
@@ -70,9 +70,15 @@ class APIImpl(
         item: InputItemT,
         id: IdT,
         itemName: String,
+        beforeEdit: suspend (ItemT) -> Response<Unit>? = { null },
     ): Response<Unit> {
-        if (storage.getByIdOrNull(id) == null) {
-            return Response.Error("$itemName with id '$id' not found", NotFound)
+        val existingItem = storage.getByIdOrNull(id) ?: return Response.Error(
+            "$itemName with id '$id' not found",
+            NotFound,
+        )
+        val editInterruptionResult = beforeEdit(existingItem)
+        if (editInterruptionResult != null) {
+            return editInterruptionResult
         }
         storage.edit(id, item)
         return Response.Success()
@@ -218,7 +224,19 @@ class APIImpl(
         tournamentId: TournamentId,
         tournament: InputTournament,
     ): Response<Unit> =
-        update(storages.tournament, tournament, tournamentId, "Tournament")
+        update(storages.tournament, tournament, tournamentId, "Tournament") { existing ->
+            val participatingPlayerIds = existing.participatingPlayerIds
+            val newParticipatingPlayerIds = tournament.participatingPlayerIds
+            if (
+                storages.game.getAllByTournamentId(tournamentId).isNotEmpty()
+                && participatingPlayerIds != newParticipatingPlayerIds
+            )
+                Response.Error(
+                    "Cannot change participating players when the tournament already has games",
+                    BadRequest,
+                )
+            else null
+        }
 
     override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
         storages.tournament.delete(tournamentId)
@@ -229,16 +247,25 @@ class APIImpl(
         tournamentId: TournamentId,
         game: InputGame,
     ): Response<NewResourceId> {
-        if (storages.tournament.getByIdOrNull(tournamentId) == null) {
-            return Response.Error(
-                "Tournament $tournamentId not found",
-                NotFound,
-            )
-        }
+        val tournament = storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
+            "Tournament $tournamentId not found",
+            NotFound,
+        )
         try {
             game.validate()
         } catch (e: IllegalArgumentException) {
             return Response.Error(e, UnprocessableEntity)
+        }
+        val participatingPlayerIds = tournament.participatingPlayerIds
+        if (participatingPlayerIds.isNotEmpty()) {
+            for (player in game.players.map { it.playerId }) {
+                if (player !in participatingPlayerIds) {
+                    return Response.Error(
+                        "Player id='$player' is not participating in the tournament",
+                        BadRequest,
+                    )
+                }
+            }
         }
         val id = storages.game.create(tournamentId, game)
         return Response.Success(NewResourceId(id), Created)
@@ -252,27 +279,27 @@ class APIImpl(
     override suspend fun getScoreboard(
         tournamentId: TournamentId,
     ): Response<ResponseList<ScoreboardRow>> {
-        @Suppress("RETURN_VALUE_NOT_USED")
-        storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
+        val tournament = storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
             "Tournament $tournamentId not found",
             NotFound,
         )
-        val scoreboardSorted = calculateScoreboard(storages.game.getAllByTournamentId(tournamentId))
-            .map {
-                it.toScoreboardRow(
-                    storages.player.getByIdOrNull(it.playerId)
-                        ?: Player(it.playerId, "Unknown player ${it.playerId}"),
-                )
-            }
-            .sortedWith(
-                compareByDescending<ScoreboardRow> { it.totalPointsX100 }
-                    .thenByDescending { it.playCount.total }
-                    .thenByDescending { it.extraPointsX100 }
-                    .thenByDescending { it.winCount.total }
-                    .thenByDescending { it.winCount.don + it.winCount.sheriff }
-                    .thenByDescending { it.firstNightDeaths }
-                    .thenBy { it.player.nickname },
+        val scoreboardSorted = calculateScoreboard(
+            storages.game.getAllByTournamentId(tournamentId),
+            tournament.participatingPlayers,
+        ).map {
+            it.toScoreboardRow(
+                storages.player.getByIdOrNull(it.playerId)
+                    ?: Player(it.playerId, "Unknown player ${it.playerId}"),
             )
+        }.sortedWith(
+            compareByDescending<ScoreboardRow> { it.totalPointsX100 }
+                .thenByDescending { it.playCount.total }
+                .thenByDescending { it.extraPointsX100 }
+                .thenByDescending { it.winCount.total }
+                .thenByDescending { it.winCount.don + it.winCount.sheriff }
+                .thenByDescending { it.firstNightDeaths }
+                .thenBy { it.player.nickname },
+        )
         val scoreboardSortedWithPlaces = setPlaces(scoreboardSorted)
         return Response.Success(ResponseList(scoreboardSortedWithPlaces))
     }

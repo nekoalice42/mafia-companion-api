@@ -10,4 +10,5 @@ public data class Tournament(
     val name: String,
     val startDate: Instant,
     val endDate: Instant?,
+    val participatingPlayers: List<PlayerStartingPoints>,
 ) : CRUDModel<TournamentId>
