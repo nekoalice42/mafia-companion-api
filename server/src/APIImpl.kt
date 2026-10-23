@@ -39,21 +39,15 @@ import me.nekoalice.mafia.api.server.validation.validate
 import me.nekoalice.mafia.api.server.validation.validateEdited
 import me.nekoalice.mafia.api.server.validation.validateNew
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
-
-private val accessTokenExpiration = 30.minutes
-private val refreshTokenExpiration = 7.days
-private val authCodeExpiration = 10.minutes
-private val clientStateExpiration = 15.minutes
-private val allowedAppRedirectUrlRegex = Regex("""^mafia-api://auth/[^?&=]+$""")
 
 class APIImpl(
     private val storages: StorageProvider,
     private val telegramOidcClientId: String?,
     urls: EnvironmentUrls,
     private val currentTimeProvider: () -> Instant = Clock.System::now,
+    private val expiryConfig: LoginExpiryConfig,
+    private val appRedirectRegex: Regex,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
@@ -92,23 +86,23 @@ class APIImpl(
         val tokens = storages.auth.createTokenPair(
             userId = userId,
             currentTime = currentTimeProvider(),
-            accessTokenExpiration = accessTokenExpiration,
-            refreshTokenExpiration = refreshTokenExpiration,
+            accessTokenExpiration = expiryConfig.accessToken,
+            refreshTokenExpiration = expiryConfig.refreshToken,
         )
         return TokenPair(
             access = TokenInfo(
                 value = tokens.access,
-                expiresInSeconds = accessTokenExpiration.inWholeSeconds.toULong(),
+                expiresInSeconds = expiryConfig.accessToken.inWholeSeconds.toULong(),
             ),
             refresh = TokenInfo(
                 value = tokens.refresh,
-                expiresInSeconds = refreshTokenExpiration.inWholeSeconds.toULong(),
+                expiresInSeconds = expiryConfig.refreshToken.inWholeSeconds.toULong(),
             ),
         )
     }
 
     private fun isRedirectUrlValid(redirectUrl: String): Boolean =
-        allowedAppRedirectUrlRegex.matches(redirectUrl)
+        appRedirectRegex.matches(redirectUrl)
 
     override suspend fun getRoot(): Response<HelloResponse> =
         Response.Success(HelloResponse())
@@ -345,7 +339,7 @@ class APIImpl(
             code = code,
             userId = user.id,
             currentTime = currentTimeProvider(),
-            expiration = authCodeExpiration,
+            expiration = expiryConfig.authCode,
         )
         val clientState = storages.auth.popClientStateOrNull(oauthState, currentTimeProvider())
         if (clientState?.redirectUrl != null) {
@@ -393,7 +387,7 @@ class APIImpl(
             state = oauthState,
             clientState = AuthStorage.ClientState(redirectUrl, clientState),
             currentTime = currentTimeProvider(),
-            expiration = clientStateExpiration,
+            expiration = expiryConfig.clientState,
         )
     }
 

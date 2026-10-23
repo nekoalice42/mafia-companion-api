@@ -5,6 +5,8 @@ import io.ktor.server.config.getAs
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import me.nekoalice.mafia.api.server.storage.StorageType
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 sealed class StorageConfig(val type: StorageType) {
     data object InMemory : StorageConfig(StorageType.IN_MEMORY)
@@ -37,10 +39,23 @@ data class EnvironmentUrls(
     val prod: String?,
 )
 
+data class LoginConfig(
+    val expiry: LoginExpiryConfig,
+    val appRedirectUrlRegex: Regex,
+)
+
+data class LoginExpiryConfig(
+    val accessToken: Duration,
+    val refreshToken: Duration,
+    val authCode: Duration,
+    val clientState: Duration,
+)
+
 data class MafiaAppConfig(
     val storage: StorageConfig,
     val telegramOidc: TelegramOidcConfig?,
     val openapi: OpenAPIConfig,
+    val login: LoginConfig,
 )
 
 fun loadAppConfig(config: ApplicationConfigValue) = config.getAs<RawMafiaAppConfig>().let { raw ->
@@ -76,8 +91,22 @@ fun loadAppConfig(config: ApplicationConfigValue) = config.getAs<RawMafiaAppConf
                 ),
             )
         },
+        login = LoginConfig(
+            expiry = LoginExpiryConfig(
+                accessToken = raw.login.expiry.accessToken.toDuration(),
+                refreshToken = raw.login.expiry.refreshToken.toDuration(),
+                authCode = raw.login.expiry.authCode.toDuration(),
+                clientState = raw.login.expiry.clientState.toDuration(),
+            ),
+            appRedirectUrlRegex = Regex(raw.login.appRedirectUrlRegex),
+        ),
     )
 }
+
+private fun String.toDuration(): Duration =
+    requireNotNull(Duration.parseOrNull(this) ?: toIntOrNull()?.seconds) {
+        "Invalid duration: $this"
+    }
 
 @Serializable
 private data class RawMafiaAppConfig(
@@ -85,6 +114,7 @@ private data class RawMafiaAppConfig(
     @SerialName("telegram-oidc")
     val telegramOidc: RawTelegramOidcConfig,
     val openapi: RawOpenAPIConfig,
+    val login: RawLoginConfig,
 ) {
     @Serializable
     data class RawStorageConfig(
@@ -147,5 +177,24 @@ private data class RawMafiaAppConfig(
         init {
             requireNotNull(urls["dev"]) { "'dev' URL must be specified" }
         }
+    }
+
+    @Serializable
+    data class RawLoginConfig(
+        val expiry: RawExpiryConfig,
+        @SerialName("app_redirect_url_regex")
+        val appRedirectUrlRegex: String,
+    ) {
+        @Serializable
+        data class RawExpiryConfig(
+            @SerialName("access_token")
+            val accessToken: String,
+            @SerialName("refresh_token")
+            val refreshToken: String,
+            @SerialName("auth_code")
+            val authCode: String,
+            @SerialName("client_state")
+            val clientState: String,
+        )
     }
 }

@@ -16,6 +16,8 @@ fun Application.initDependencies() {
         storages = StorageProvider(config.storage.type),
         telegramOidcClientId = config.telegramOidc?.clientId,
         urls = config.openapi.urls,
+        expiryConfig = config.login.expiry,
+        appRedirectRegex = config.login.appRedirectUrlRegex,
     )
     val httpClient = HttpClient {
         install(ContentNegotiation) {
