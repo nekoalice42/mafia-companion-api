@@ -24,13 +24,13 @@ internal fun BaseAPI.applyPublicOpenAPIJSONRoutes() {
                 },
             ),
             servers = listOfNotNull(
-                info.developmentUrl?.let {
+                info.urls.development?.let {
                     Server(url = it, description = "Development server")
                 },
-                info.stagingUrl?.let {
+                info.urls.staging?.let {
                     Server(url = it, description = "Staging server")
                 },
-                info.productionUrl?.let {
+                info.urls.production?.let {
                     Server(url = it, description = "Production server")
                 },
             ),

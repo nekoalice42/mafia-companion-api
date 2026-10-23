@@ -4,7 +4,5 @@ public data class APIInfo(
     val name: String,
     val version: String,
     val licenseIdentifier: String?,
-    val developmentUrl: String? = "http://localhost:8080",
-    val stagingUrl: String? = null,
-    val productionUrl: String?,
+    val urls: EnvironmentUrls,
 )

@@ -35,8 +35,15 @@ import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
 
 public abstract class BaseAPI(
-    public val info: APIInfo,
+    environmentUrls: EnvironmentUrls,
 ) {
+    public val info: APIInfo = APIInfo(
+        name = "mafia-companion-api",
+        version = "0.1.0-beta.4",
+        licenseIdentifier = "AGPL-3.0",
+        urls = environmentUrls,
+    )
+
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getHealth(): Response<HealthResponse>
     public abstract suspend fun login(loginData: LoginData): Response<TokenPair>

@@ -1,10 +1,12 @@
 package me.nekoalice.mafia.api.server.modules
 
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.DefaultJson
+import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.application.Application
 import kotlinx.serialization.json.Json
+import me.nekoalice.mafia.api.contracts.EnvironmentUrls
 import me.nekoalice.mafia.api.server.APIImpl
 import me.nekoalice.mafia.api.server.loadAppConfig
 import me.nekoalice.mafia.api.server.storage.StorageProvider
@@ -15,7 +17,13 @@ fun Application.initDependencies() {
     val api = APIImpl(
         storages = StorageProvider(config.storage.type),
         telegramOidcClientId = config.telegramOidc?.clientId,
-        urls = config.openapi.urls,
+        urls = with(config.openapi.urls) {
+            EnvironmentUrls(
+                development = dev,
+                staging = stage,
+                production = prod,
+            )
+        },
         expiryConfig = config.login.expiry,
         appRedirectRegex = config.login.appRedirectUrlRegex,
     )

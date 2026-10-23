@@ -9,8 +9,8 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.html.html
 import kotlinx.html.stream.appendHTML
-import me.nekoalice.mafia.api.contracts.APIInfo
 import me.nekoalice.mafia.api.contracts.BaseAPI
+import me.nekoalice.mafia.api.contracts.EnvironmentUrls
 import me.nekoalice.mafia.api.dto.auth.*
 import me.nekoalice.mafia.api.dto.base.CRUDModel
 import me.nekoalice.mafia.api.dto.base.InputCRUDModel
@@ -49,14 +49,7 @@ class APIImpl(
     private val expiryConfig: LoginExpiryConfig,
     private val appRedirectRegex: Regex,
 ) : BaseAPI(
-    info = APIInfo(
-        name = "mafia-companion-api",
-        version = "0.1.0-beta.4",
-        licenseIdentifier = "AGPL-3.0",
-        developmentUrl = urls.dev,
-        stagingUrl = urls.stage,
-        productionUrl = urls.prod,
-    ),
+    environmentUrls = urls,
 ) {
     private suspend fun <
             StorageT : CRUDStorage<ItemT, InputItemT, IdT>,
