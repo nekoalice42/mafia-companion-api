@@ -77,6 +77,7 @@ public abstract class BaseAPI(
     public abstract suspend fun deleteGame(gameId: GameId): Response<Unit>
     public abstract suspend fun getScoreboard(
         tournamentId: TournamentId,
+        isAuthenticated: Boolean,
     ): Response<ResponseList<ScoreboardRow>>
 
     public abstract suspend fun telegramOauthCallbackHtml(
@@ -110,6 +111,10 @@ public abstract class BaseAPI(
         applyPrivatePlayerRoutes()
         applyPrivateTournamentRoutes()
         applyPrivateUserRoutes()
+    }
+
+    public fun applyRestrictedRoutesTo(routing: Route): Unit = context(routing) {
+        applyRestrictedTournamentRoutes()
     }
 
     public fun applyPublicRoutesTo(routing: Route): Unit = context(routing) {

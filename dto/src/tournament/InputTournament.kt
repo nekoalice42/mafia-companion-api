@@ -7,15 +7,17 @@ import kotlin.time.Instant
 @Serializable
 public data class InputTournament(
     val name: String,
-    val startDate: Instant,
-    val endDate: Instant?,
+    val startsAt: Instant,
+    val endsAt: Instant?,
     val participatingPlayers: List<PlayerStartingPoints>,
+    val scoreboardFreezesAt: Instant?,
 ) : InputCRUDModel<Tournament, TournamentId> {
     override fun toModel(id: TournamentId): Tournament = Tournament(
         id = id,
         name = name,
-        startDate = startDate,
-        endDate = endDate,
+        startsAt = startsAt,
+        endsAt = endsAt,
         participatingPlayers = participatingPlayers,
+        scoreboardFreezesAt = scoreboardFreezesAt,
     )
 }

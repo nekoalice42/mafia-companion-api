@@ -27,8 +27,9 @@ class PostgreSQLTournamentStorage : TournamentStorage {
             Tournaments.insert {
                 it[this.id] = id.value
                 it[name] = item.name
-                it[startsAt] = item.startDate
-                it[endsAt] = item.endDate
+                it[startsAt] = item.startsAt
+                it[endsAt] = item.endsAt
+                it[scoreboardFreezesAt] = item.scoreboardFreezesAt
             }
             TournamentPlayers.batchInsert(item.participatingPlayers) {
                 this[TournamentPlayers.tournamentId] = id.value
@@ -57,8 +58,9 @@ class PostgreSQLTournamentStorage : TournamentStorage {
             Tournaments.update(where = { Tournaments.id eq id.value }) {
                 it[this.id] = id.value
                 it[name] = item.name
-                it[startsAt] = item.startDate
-                it[endsAt] = item.endDate
+                it[startsAt] = item.startsAt
+                it[endsAt] = item.endsAt
+                it[scoreboardFreezesAt] = item.scoreboardFreezesAt
             }
             TournamentPlayers.deleteWhere {
                 val participatingPlayerIds = item.participatingPlayers.map { it.playerId.value }

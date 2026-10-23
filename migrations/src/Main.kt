@@ -18,6 +18,7 @@ val migrations = listOf(
     V07ChangeTokensPK,
     V08NullableWinnerTeam,
     V09TournamentPlayers,
+    V10AddScoreboardFreeze,
 )
 
 val logger: Logger = LoggerFactory.getLogger("Migrations")

@@ -1,6 +1,7 @@
 package me.nekoalice.mafia.api.contracts.routes
 
 import io.ktor.http.HttpMethod.Companion.Post
+import io.ktor.server.auth.principal
 import io.ktor.server.routing.*
 import me.nekoalice.mafia.api.contracts.BaseAPI
 import me.nekoalice.mafia.api.contracts.openapi.descriptions.tournament.TournamentByIdDescriber
@@ -11,6 +12,7 @@ import me.nekoalice.mafia.api.contracts.resources.TournamentResource
 import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
 import me.nekoalice.mafia.api.dto.game.InputGame
 import me.nekoalice.mafia.api.dto.tournament.InputTournament
+import me.nekoalice.mafia.api.dto.user.UserId
 
 context(routing: Route)
 internal fun BaseAPI.applyPublicTournamentRoutes() {
@@ -22,12 +24,15 @@ internal fun BaseAPI.applyPublicTournamentRoutes() {
         getTournament(it.id)
     }
 
-    routing.defineRoute<TournamentResource.ById.Scoreboard, _>(Get, TournamentScoreboardDescriber) {
-        getScoreboard(it.parent.id)
-    }
-
     routing.defineRoute<TournamentResource.ById.Game, _>(Get, TournamentGameDescriber) {
         getTournamentGames(it.parent.id)
+    }
+}
+
+context(routing: Route)
+internal fun BaseAPI.applyRestrictedTournamentRoutes() {
+    routing.defineRoute<TournamentResource.ById.Scoreboard, _>(Get, TournamentScoreboardDescriber) {
+        getScoreboard(it.parent.id, call.principal<UserId>() != null)
     }
 }
 

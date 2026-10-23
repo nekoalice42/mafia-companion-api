@@ -19,5 +19,8 @@ fun Application.configureSecurity() {
         authenticate("app-token") {
             api.applySecureRoutesTo(this)
         }
+        authenticate("app-token", optional = true) {
+            api.applyRestrictedRoutesTo(this)
+        }
     }
 }

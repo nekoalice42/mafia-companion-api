@@ -8,7 +8,8 @@ import kotlin.time.Instant
 public data class Tournament(
     override val id: TournamentId,
     val name: String,
-    val startDate: Instant,
-    val endDate: Instant?,
+    val startsAt: Instant,
+    val endsAt: Instant?,
     val participatingPlayers: List<PlayerStartingPoints>,
+    val scoreboardFreezesAt: Instant?,
 ) : CRUDModel<TournamentId>

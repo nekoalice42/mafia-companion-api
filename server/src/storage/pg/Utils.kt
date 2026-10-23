@@ -96,9 +96,10 @@ internal fun tournamentFromDao(
 ) = Tournament(
     id = TournamentId(row[Tournaments.id].value),
     name = row[Tournaments.name],
-    startDate = row[Tournaments.startsAt],
-    endDate = row[Tournaments.endsAt],
+    startsAt = row[Tournaments.startsAt],
+    endsAt = row[Tournaments.endsAt],
     participatingPlayers = participatingPlayers,
+    scoreboardFreezesAt = row[Tournaments.scoreboardFreezesAt],
 )
 
 internal fun userFromDao(row: ResultRow): User =

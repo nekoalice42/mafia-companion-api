@@ -9,12 +9,15 @@ import me.nekoalice.mafia.api.dto.game.GameId
 import me.nekoalice.mafia.api.dto.game.InputGame
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.server.storage.base.GameStorage
+import org.jetbrains.exposed.v1.core.andIfNotNull
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.r2dbc.batchInsert
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import kotlin.time.Instant
 
 class PostgreSQLGameStorage : GameStorage {
     override suspend fun create(tournamentId: TournamentId, game: InputGame): GameId {
@@ -39,10 +42,12 @@ class PostgreSQLGameStorage : GameStorage {
         return id
     }
 
-    override suspend fun getAllByTournamentId(tournamentId: TournamentId): List<Game> = readonlyTx {
+    override suspend fun getAllByTournamentId(tournamentId: TournamentId, until: Instant?): List<Game> = readonlyTx {
         val games = Games.selectAll()
-            .where { Games.tournamentId eq tournamentId.value }
-            .toList()
+            .where {
+                (Games.tournamentId eq tournamentId.value) andIfNotNull
+                        until?.let { Games.startedAt less it }
+            }.toList()
         if (games.isEmpty()) return@readonlyTx emptyList()
 
         val gameIds = games.map { it[Games.id].value }

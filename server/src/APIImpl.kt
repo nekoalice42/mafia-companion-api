@@ -36,9 +36,12 @@ import me.nekoalice.mafia.api.server.storage.base.StorageProvider
 import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import me.nekoalice.mafia.api.server.utils.*
 import me.nekoalice.mafia.api.server.validation.validate
+import me.nekoalice.mafia.api.server.validation.validateEdited
+import me.nekoalice.mafia.api.server.validation.validateNew
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
 
 private val accessTokenExpiration = 30.minutes
 private val refreshTokenExpiration = 7.days
@@ -53,7 +56,7 @@ class APIImpl(
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-beta.3",
+        version = "0.1.0-beta.4",
         licenseIdentifier = "AGPL-3.0",
         developmentUrl = urls.dev,
         stagingUrl = urls.stage,
@@ -216,6 +219,9 @@ class APIImpl(
     }
 
     override suspend fun createTournament(tournament: InputTournament): Response<NewResourceId> {
+        runCatching { tournament.validateNew() }.onFailure {
+            return Response.Error(it, BadRequest)
+        }
         val id = storages.tournament.add(tournament)
         return Response.Success(NewResourceId(id), Created)
     }
@@ -225,17 +231,17 @@ class APIImpl(
         tournament: InputTournament,
     ): Response<Unit> =
         update(storages.tournament, tournament, tournamentId, "Tournament") { existing ->
-            val participatingPlayerIds = existing.participatingPlayerIds
-            val newParticipatingPlayerIds = tournament.participatingPlayerIds
-            if (
-                storages.game.getAllByTournamentId(tournamentId).isNotEmpty()
-                && participatingPlayerIds != newParticipatingPlayerIds
-            )
-                Response.Error(
-                    "Cannot change participating players when the tournament already has games",
-                    BadRequest,
+            val hasGames = storages.game.getAllByTournamentId(tournamentId).isNotEmpty()
+            runCatching { tournament.validateEdited(existing, hasGames) }
+                .fold(
+                    onSuccess = { null },
+                    onFailure = {
+                        Response.Error(
+                            it,
+                            if (it is IllegalArgumentException) BadRequest else InternalServerError,
+                        )
+                    },
                 )
-            else null
         }
 
     override suspend fun deleteTournament(tournamentId: TournamentId): Response<Unit> {
@@ -278,13 +284,21 @@ class APIImpl(
 
     override suspend fun getScoreboard(
         tournamentId: TournamentId,
+        isAuthenticated: Boolean,
     ): Response<ResponseList<ScoreboardRow>> {
         val tournament = storages.tournament.getByIdOrNull(tournamentId) ?: return Response.Error(
             "Tournament $tournamentId not found",
             NotFound,
         )
+        val now = Clock.System.now()
+        val isScoreboardFrozen =
+            !isAuthenticated
+                    && tournament.scoreboardFreezesAt != null
+                    && now >= tournament.scoreboardFreezesAt!!
+                    && tournament.endsAt?.let { now <= it } ?: true
+        val until = if (isScoreboardFrozen) tournament.scoreboardFreezesAt!! else null
         val scoreboardSorted = calculateScoreboard(
-            storages.game.getAllByTournamentId(tournamentId),
+            storages.game.getAllByTournamentId(tournamentId, until),
             tournament.participatingPlayers,
         ).map {
             it.toScoreboardRow(
