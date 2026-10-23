@@ -53,6 +53,7 @@ class APIImpl(
     private val storages: StorageProvider,
     private val telegramOidcClientId: String?,
     urls: EnvironmentUrls,
+    private val currentTimeProvider: () -> Instant = Clock.System::now,
 ) : BaseAPI(
     info = APIInfo(
         name = "mafia-companion-api",
@@ -90,7 +91,7 @@ class APIImpl(
     private suspend fun createTokenPair(userId: UserId): TokenPair {
         val tokens = storages.auth.createTokenPair(
             userId = userId,
-            currentTime = Clock.System.now(),
+            currentTime = currentTimeProvider(),
             accessTokenExpiration = accessTokenExpiration,
             refreshTokenExpiration = refreshTokenExpiration,
         )
@@ -162,7 +163,7 @@ class APIImpl(
     }
 
     override suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair> {
-        val userId = storages.auth.verifyRefreshTokenOrNull(refreshToken.value, Clock.System.now())
+        val userId = storages.auth.verifyRefreshTokenOrNull(refreshToken.value, currentTimeProvider())
             ?: return Response.Error(
                 "Invalid refresh token",
                 HttpStatusCode.Unauthorized,
@@ -290,7 +291,7 @@ class APIImpl(
             "Tournament $tournamentId not found",
             NotFound,
         )
-        val now = Clock.System.now()
+        val now = currentTimeProvider()
         val isScoreboardFrozen =
             !isAuthenticated
                     && tournament.scoreboardFreezesAt != null
@@ -343,10 +344,10 @@ class APIImpl(
         storages.auth.setUserForAuthCode(
             code = code,
             userId = user.id,
-            currentTime = Clock.System.now(),
+            currentTime = currentTimeProvider(),
             expiration = authCodeExpiration,
         )
-        val clientState = storages.auth.popClientStateOrNull(oauthState, Clock.System.now())
+        val clientState = storages.auth.popClientStateOrNull(oauthState, currentTimeProvider())
         if (clientState?.redirectUrl != null) {
             if (!isRedirectUrlValid(clientState.redirectUrl)) {
                 return Response.Error(
@@ -372,7 +373,7 @@ class APIImpl(
     }
 
     override suspend fun finishTelegramChallenge(code: ExternalAuthCode): Response<TokenPair> {
-        val userId = storages.auth.popUserForAuthCodeOrNull(code.code, Clock.System.now())
+        val userId = storages.auth.popUserForAuthCodeOrNull(code.code, currentTimeProvider())
             ?: return Response.Error(
                 "No user found for auth code ${code.code}",
                 HttpStatusCode.BadRequest,
@@ -381,7 +382,7 @@ class APIImpl(
     }
 
     override suspend fun handleAuthentication(token: AccessToken): UserId? =
-        storages.auth.verifyAccessTokenOrNull(token.value, Clock.System.now())
+        storages.auth.verifyAccessTokenOrNull(token.value, currentTimeProvider())
 
     override suspend fun handleNewTelegramOauthState(
         oauthState: String,
@@ -391,7 +392,7 @@ class APIImpl(
         storages.auth.setClientState(
             state = oauthState,
             clientState = AuthStorage.ClientState(redirectUrl, clientState),
-            currentTime = Clock.System.now(),
+            currentTime = currentTimeProvider(),
             expiration = clientStateExpiration,
         )
     }
