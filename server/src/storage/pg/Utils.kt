@@ -19,6 +19,8 @@ import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import me.nekoalice.mafia.api.dao.Role as DaoRole
 import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
+import me.nekoalice.mafia.api.dao.UserRole as DaoUserRole
+import me.nekoalice.mafia.api.dto.user.UserRole as DtoUserRole
 
 @IgnorableReturnValue
 internal suspend fun <T> tx(block: suspend R2dbcTransaction.() -> T) = suspendTransaction(
@@ -59,6 +61,11 @@ internal fun mapDaoRole(role: DaoRole): DtoRole = when (role) {
     DON -> Don
     SHERIFF -> Sheriff
     CITIZEN -> Citizen
+}
+
+internal fun mapDaoUserRole(role: DaoUserRole): DtoUserRole = when (role) {
+    ADMIN -> Admin
+    JUDGE -> Judge
 }
 
 internal fun gameFromDao(row: ResultRow, players: List<InGamePlayer>) = Game(
@@ -106,4 +113,5 @@ internal fun userFromDao(row: ResultRow): User =
     User(
         id = UserId(row[Users.id].value),
         username = row[Users.username],
+        role = mapDaoUserRole(row[Users.role]),
     )

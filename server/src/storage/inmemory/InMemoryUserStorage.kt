@@ -10,6 +10,7 @@ class InMemoryUserStorage : UserStorage {
         UserId(adminUserUuid) to User(
             id = UserId(adminUserUuid),
             username = "admin",
+            role = Admin,
         ),
     )
 

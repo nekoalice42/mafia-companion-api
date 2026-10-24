@@ -7,4 +7,5 @@ import me.nekoalice.mafia.api.dto.base.CRUDModel
 public data class User(
     override val id: UserId,
     val username: String,
+    val role: UserRole,
 ) : CRUDModel<UserId>

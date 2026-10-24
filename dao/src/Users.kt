@@ -6,4 +6,5 @@ import org.jetbrains.exposed.v1.core.dao.id.UuidTable
 public object Users : UuidTable("users", uuidVersion = UuidVersion.V7) {
     public val username: Column<String> = text("username").uniqueIndex()
     public val passwordHash: Column<String?> = text("password_hash").nullable()
+    public val role: Column<UserRole> = enumerationByName<UserRole>("role")
 }
