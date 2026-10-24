@@ -5,7 +5,7 @@ import me.nekoalice.mafia.api.dto.game.enums.Role
 import me.nekoalice.mafia.api.dto.player.PlayerId
 import kotlin.time.Clock
 
-fun InputGame.validate() {
+fun InputGame.validate() = runValidation {
     require(players.size == 10) { "players != 10" }
     require(
         startTime < Clock.System.now(),

@@ -39,7 +39,7 @@ public abstract class BaseAPI(
 ) {
     public val info: APIInfo = APIInfo(
         name = "mafia-companion-api",
-        version = "0.1.0-beta.4",
+        version = "0.1.0-beta.5",
         licenseIdentifier = "AGPL-3.0",
         urls = environmentUrls,
     )

@@ -29,7 +29,6 @@ internal object AuthTokenDescriber : OpenAPIResourceDescriber {
         responses {
             successResponseOf<TokenPair>("Login successful")
             errorResponse(Unauthorized, "Invalid credentials")
-            errorResponse(UnprocessableEntity, "Username and password validation failed")
             defaultKtorBodyErrorResponsesFor<LoginData>()
         }
     }

@@ -51,7 +51,6 @@ internal object TournamentGameDescriber : OpenAPIResourceDescriber {
         responses {
             successResponseOf<NewResourceId>("Game created successfully", Created)
             errorResponse(NotFound, "Tournament not found")
-            errorResponse(UnprocessableEntity, "Error validating the game")
             defaultKtorBodyErrorResponsesFor<InputGame>()
         }
     }

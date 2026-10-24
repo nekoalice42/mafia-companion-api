@@ -8,7 +8,10 @@ internal fun unsupportedMethod(method: HttpMethod): Nothing =
     throw UnsupportedOperationException("Method $method is not supported")
 
 internal inline fun <reified T> Responses.Builder.defaultKtorBodyErrorResponsesFor() {
-    response(BadRequest, "Request body could not be converted to ${T::class.simpleName}")
+    response(
+        BadRequest,
+        "Request body could not be converted to ${T::class.simpleName} or the validation failed",
+    )
     response(UnsupportedMediaType, "Request body content type is unsupported")
 }
 

@@ -121,9 +121,7 @@ class APIImpl(
     }
 
     override suspend fun login(loginData: LoginData): Response<TokenPair> {
-        if (!loginData.validate()) {
-            return Response.Error("Invalid login data", HttpStatusCode.UnprocessableEntity)
-        }
+        loginData.validate().onFailure { return Response.Error(it, BadRequest) }
         val user = storages.user.getByUsernameOrNull(loginData.username) ?: return Response.Error(
             "Invalid username",
             HttpStatusCode.Unauthorized,
@@ -138,9 +136,7 @@ class APIImpl(
         Response.Success(storages.user.getByIdOrNull(userId)!!)
 
     override suspend fun changePassword(loginData: LoginData): Response<Unit> {
-        if (!loginData.validate()) {
-            return Response.Error("Invalid login data", HttpStatusCode.UnprocessableEntity)
-        }
+        loginData.validate().onFailure { return Response.Error(it, BadRequest) }
         val user = storages.user.getByUsernameOrNull(loginData.username) ?: return Response.Error(
             "User not found",
             HttpStatusCode.BadRequest,
@@ -207,7 +203,7 @@ class APIImpl(
     }
 
     override suspend fun createTournament(tournament: InputTournament): Response<NewResourceId> {
-        runCatching { tournament.validateNew() }.onFailure {
+        tournament.validateNew().onFailure {
             return Response.Error(it, BadRequest)
         }
         val id = storages.tournament.add(tournament)
@@ -220,15 +216,10 @@ class APIImpl(
     ): Response<Unit> =
         update(storages.tournament, tournament, tournamentId, "Tournament") { existing ->
             val hasGames = storages.game.getAllByTournamentId(tournamentId).isNotEmpty()
-            runCatching { tournament.validateEdited(existing, hasGames) }
+            tournament.validateEdited(existing, hasGames)
                 .fold(
                     onSuccess = { null },
-                    onFailure = {
-                        Response.Error(
-                            it,
-                            if (it is IllegalArgumentException) BadRequest else InternalServerError,
-                        )
-                    },
+                    onFailure = { Response.Error(it, BadRequest) },
                 )
         }
 
@@ -245,11 +236,7 @@ class APIImpl(
             "Tournament $tournamentId not found",
             NotFound,
         )
-        try {
-            game.validate()
-        } catch (e: IllegalArgumentException) {
-            return Response.Error(e, UnprocessableEntity)
-        }
+        game.validate().onFailure { return Response.Error(it, BadRequest) }
         val participatingPlayerIds = tournament.participatingPlayerIds
         if (participatingPlayerIds.isNotEmpty()) {
             for (player in game.players.map { it.playerId }) {

@@ -19,10 +19,6 @@ internal object AuthPasswordDescriber : OpenAPIResourceDescriber {
             requestBodyOf<LoginData>("Username and new password of a user")
             responses {
                 successResponse("Successfully changed password")
-                errorResponse(
-                    BadRequest,
-                    "Request body could not be converted to LoginData, or specified user not found",
-                )
                 errorResponse(Unauthorized, "Invalid credentials")
                 defaultKtorBodyErrorResponsesFor<LoginData>()
             }
