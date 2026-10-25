@@ -1,0 +1,165 @@
+name: Build, publish and deploy images
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+        description: The environment to deploy to
+      environment-url:
+        type: string
+        required: true
+        description: The URL of the environment to deploy to
+      deployment-tag:
+        type: string
+        required: true
+        description: The tag to deploy
+      project-name:
+        type: string
+        required: true
+        description: The name of the compose project to deploy
+      compose-traefik-dropin-file:
+        type: string
+        required: true
+        description: The fullname of a compose drop-in file to use in .deploy/docker/compose.yaml.d/ directory
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to the Docker registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract migrations image metadata
+        id: migrations-meta
+        uses: docker/metadata-action@v6
+        with:
+          bake-target: migrations
+          images: ghcr.io/${{ github.repository }}/migrations
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=${{ inputs.deployment-tag }}
+
+      - name: Extract cleaner image metadata
+        id: cleaner-meta
+        uses: docker/metadata-action@v6
+        with:
+          bake-target: cleaner
+          images: ghcr.io/${{ github.repository }}/cleaner
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=${{ inputs.deployment-tag }}
+
+      - name: Extract server image metadata
+        id: server-meta
+        uses: docker/metadata-action@v6
+        with:
+          bake-target: server
+          images: ghcr.io/${{ github.repository }}/server
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=${{ inputs.deployment-tag }}
+
+      - name: Build and push images
+        uses: docker/bake-action@v7
+        with:
+          source: .
+          files: |
+            ./compose.yaml
+            ./.deploy/docker/compose.yaml.d/build.yaml
+            cwd://${{ steps.migrations-meta.outputs.bake-file }}
+            cwd://${{ steps.cleaner-meta.outputs.bake-file }}
+            cwd://${{ steps.server-meta.outputs.bake-file }}
+          targets: |
+            migrations
+            cleaner
+            server
+          push: true
+          sbom: true
+          provenance: true
+          set: |
+            cleaner.cache-from=type=gha,scope=cleaner
+            migrations.cache-from=type=gha,scope=migrations
+            server.cache-from=type=gha,scope=server
+            cleaner.cache-to=type=gha,scope=cleaner,mode=max
+            migrations.cache-to=type=gha,scope=migrations,mode=max
+            server.cache-to=type=gha,scope=server,mode=max
+
+  deploy:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment-url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
+          ping: ${{ secrets.TAILSCALE_DEPLOY_HOST }}
+
+      - name: Test SSH connection to deploy host
+        env:
+          TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS: ${{ secrets.TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS" >>~/.ssh/known_hosts
+          ssh -v \
+            -o ConnectTimeout=30 \
+            -T \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }} \
+            echo success
+
+      - name: Set up Docker Compose
+        uses: docker/setup-compose-action@v2
+
+      - name: Deploy
+        env:
+          DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          TELEGRAM_OIDC_CLIENT_ID: ${{ secrets.TELEGRAM_OIDC_CLIENT_ID }}
+          TELEGRAM_OIDC_CLIENT_SECRET: ${{ secrets.TELEGRAM_OIDC_CLIENT_SECRET }}
+          TELEGRAM_OIDC_STATE_SECRET: ${{ secrets.TELEGRAM_OIDC_STATE_SECRET }}
+          DOCKER_HOST: ssh://${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }}
+          DOCKER_IMAGE_NAME_MIGRATIONS: ghcr.io/${{ github.repository }}/migrations
+          DOCKER_IMAGE_TAG_MIGRATIONS: ${{ inputs.deployment-tag }}
+          DOCKER_IMAGE_NAME_CLEANER: ghcr.io/${{ github.repository }}/cleaner
+          DOCKER_IMAGE_TAG_CLEANER: ${{ inputs.deployment-tag }}
+          DOCKER_IMAGE_NAME_SERVER: ghcr.io/${{ github.repository }}/server
+          DOCKER_IMAGE_TAG_SERVER: ${{ inputs.deployment-tag }}
+          COMPOSE_PROJECT_NAME: ${{ inputs.project-name }}
+          COMPOSE_FILE: "compose.yaml:.deploy/docker/compose.yaml.d/${{ inputs.compose-traefik-dropin-file }}"
+        run: |
+          docker compose \
+            up \
+            cleaner \
+            server \
+            --pull always \
+            --detach \
+            --no-build \
+            --wait \
+            --wait-timeout 300

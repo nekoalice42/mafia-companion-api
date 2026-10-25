@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
+      - production
     paths:
-      - '.github/workflows/build.yaml'
-      - '.github/workflows/build-publish-deploy.yaml'
+      - '.deploy/docker/compose.yaml.d/*'
+      - '.github/workflows/*'
       - 'apiContract/**'
       - 'cleaner/**'
-      - 'compose.yaml.d/**'
       - 'dao/**'
       - 'dto/**'
       - 'migrations/**'
@@ -20,186 +20,35 @@ on:
       - 'kotlin'
       - 'libs.versions.toml'
       - 'project.yaml'
-  workflow_dispatch:
-    inputs:
-      server_tag:
-        description: 'Tag to use for the server image'
-        required: false
-        default: 'latest'
-      migrations_tag:
-        description: 'Tag to use for the migrations image'
-        required: false
-        default: 'latest'
-      cleaner_tag:
-        description: 'Tag to use for the cleaner image'
-        required: false
-        default: 'latest'
 
 permissions:
   contents: read
+  packages: write
+  id-token: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    if: "github.event_name != 'workflow_dispatch'"
-    outputs:
-      server_changed: ${{ steps.changed-files.outputs.server_any_changed }}
-      migrations_changed: ${{ steps.changed-files.outputs.migrations_any_changed }}
-      cleaner_changed: ${{ steps.changed-files.outputs.cleaner_any_changed }}
-      deploy_changed: ${{ steps.changed-files.outputs.deploy_any_changed }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-
-      - name: Get changed files
-        id: changed-files
-        uses: tj-actions/changed-files@v47.0.6
-        with:
-          # language=yaml
-          files_yaml: |
-            server:
-              - '.github/workflows/build.yaml'
-              - '.github/workflows/build-publish-deploy.yaml'
-              - 'apiContract/**'
-              - 'dao/**'
-              - 'dto/**'
-              - 'module-templates/**'
-              - 'server/**'
-              - 'Dockerfile'
-              - 'kotlin'
-              - 'libs.versions.toml'
-              - 'project.yaml'
-            migrations:
-              - '.github/workflows/build.yaml'
-              - '.github/workflows/build-publish-deploy.yaml'
-              - 'migrations/**'
-              - 'module-templates/**'
-              - 'Dockerfile'
-              - 'kotlin'
-              - 'libs.versions.toml'
-              - 'project.yaml'
-            cleaner:
-              - '.github/workflows/build.yaml'
-              - '.github/workflows/build-publish-deploy.yaml'
-              - 'cleaner/**'
-              - 'dao/**'
-              - 'module-templates/**'
-              - 'Dockerfile'
-              - 'kotlin'
-              - 'libs.versions.toml'
-              - 'project.yaml'
-            deploy:
-              - 'compose.yaml.d/**'
-              - 'compose.yaml'
-
-  build-server:
-    needs:
-      - detect-changes
-    permissions:
-      contents: read
-      packages: write
-    if: success() && needs.detect-changes.outputs.server_changed == 'true'
-    uses: ./.github/workflows/build.yaml
+  build-deploy-staging:
+    if: github.ref_name == 'main'
+    uses: ./.github/workflows/build-publish-deploy-module.yaml
+    secrets: inherit
     with:
-      image_suffix: server
-      dockerfile_target: server
+      environment: staging
+      environment-url: https://stage.api.mafia.nekoalice.me
+      deployment-tag: dev
+      project-name: mafia-companion-api-stage
+      compose-traefik-dropin-file: traefik-stage.yaml
 
-  build-migrations:
-    needs:
-      - detect-changes
-    permissions:
-      contents: read
-      packages: write
-    if: success() && needs.detect-changes.outputs.migrations_changed == 'true'
-    uses: ./.github/workflows/build.yaml
+  build-deploy-production:
+    if: github.ref_name == 'production'
+    uses: ./.github/workflows/build-publish-deploy-module.yaml
+    secrets: inherit
     with:
-      image_suffix: migrations
-      dockerfile_target: migrations
-
-  build-cleaner:
-    needs:
-      - detect-changes
-    permissions:
-      contents: read
-      packages: write
-    if: success() && needs.detect-changes.outputs.cleaner_changed == 'true'
-    uses: ./.github/workflows/build.yaml
-    with:
-      image_suffix: cleaner
-      dockerfile_target: cleaner
-
-  deploy:
-    needs:
-      - detect-changes
-      - build-server
-      - build-migrations
-      - build-cleaner
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: https://api.mafia.nekoalice.me
-    if: >
-      !cancelled()
-      && !failure()
-      && (
-        github.event_name == 'workflow_dispatch'
-        || needs.build-server.result == 'success'
-        || needs.build-migrations.result == 'success'
-        || needs.build-cleaner.result == 'success'
-        || needs.detect-changes.outputs.deploy_changed == 'true'
-      )
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Tailscale
-        uses: tailscale/github-action@v4
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTH_KEY }}
-          ping: ${{ secrets.TAILSCALE_DEPLOY_HOST }}
-
-      - name: Test SSH connection to deploy host
-        env:
-          TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS: ${{ secrets.TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS }}
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$TAILSCALE_DEPLOY_HOST_SSH_PUBKEYS" >>~/.ssh/known_hosts
-          ssh -v \
-            -o ConnectTimeout=30 \
-            -T \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }} \
-            echo success
-
-      - name: Deploy
-        env:
-          DATABASE_USER: ${{ secrets.DATABASE_USER }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          TELEGRAM_OIDC_CLIENT_ID: ${{ secrets.TELEGRAM_OIDC_CLIENT_ID }}
-          TELEGRAM_OIDC_CLIENT_SECRET: ${{ secrets.TELEGRAM_OIDC_CLIENT_SECRET }}
-          TELEGRAM_OIDC_STATE_SECRET: ${{ secrets.TELEGRAM_OIDC_STATE_SECRET }}
-          DOCKER_HOST: ssh://${{ secrets.DEPLOY_USER }}@${{ secrets.TAILSCALE_DEPLOY_HOST }}
-          DOCKER_IMAGE_NAME_MIGRATIONS: ghcr.io/${{ github.repository }}/migrations
-          DOCKER_IMAGE_TAG_MIGRATIONS: ${{ inputs.migrations_tag || 'latest' }}
-          DOCKER_IMAGE_NAME_CLEANER: ghcr.io/${{ github.repository }}/cleaner
-          DOCKER_IMAGE_TAG_CLEANER: ${{ inputs.cleaner_tag || 'latest' }}
-          DOCKER_IMAGE_NAME_SERVER: ghcr.io/${{ github.repository }}/server
-          DOCKER_IMAGE_TAG_SERVER: ${{ inputs.server_tag || 'latest' }}
-        run: |
-          docker compose \
-            -f compose.yaml \
-            -f compose.yaml.d/traefik.yaml \
-            up \
-            cleaner \
-            server \
-            --pull always \
-            --detach \
-            --no-build \
-            --wait \
-            --wait-timeout 300
+      environment: production
+      environment-url: https://api.mafia.nekoalice.me
+      deployment-tag: latest
+      project-name: mafia-companion-api
+      compose-traefik-dropin-file: traefik.yaml
