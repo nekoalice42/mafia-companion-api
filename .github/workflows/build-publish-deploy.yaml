@@ -20,6 +20,11 @@ on:
       - 'kotlin'
       - 'libs.versions.toml'
       - 'project.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        required: true
 
 permissions:
   contents: read
@@ -32,10 +37,11 @@ concurrency:
 
 jobs:
   build-deploy-staging:
-    if: github.ref_name == 'main'
+    if: github.ref_name == 'main' || inputs.environment == 'staging'
     uses: ./.github/workflows/build-publish-deploy-module.yaml
     secrets: inherit
     with:
+      checkout-ref: main
       environment: staging
       environment-url: https://stage.api.mafia.nekoalice.me
       deployment-tag: dev
@@ -43,10 +49,11 @@ jobs:
       compose-traefik-dropin-file: traefik-stage.yaml
 
   build-deploy-production:
-    if: github.ref_name == 'production'
+    if: github.ref_name == 'production' || inputs.environment == 'production'
     uses: ./.github/workflows/build-publish-deploy-module.yaml
     secrets: inherit
     with:
+      checkout-ref: production
       environment: production
       environment-url: https://api.mafia.nekoalice.me
       deployment-tag: latest

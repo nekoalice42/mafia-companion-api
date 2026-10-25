@@ -3,6 +3,10 @@ name: Build, publish and deploy images
 on:
   workflow_call:
     inputs:
+      checkout-ref:
+        type: string
+        required: true
+        description: The ref to checkout before building and deploying
       environment:
         type: string
         required: true
@@ -34,6 +38,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.checkout-ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
