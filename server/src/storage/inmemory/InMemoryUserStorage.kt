@@ -35,9 +35,13 @@ class InMemoryUserStorage : UserStorage, UserMemoryStorage(UserId::new) {
         provider: ExternalUserProvider,
         externalId: String,
     ) {
+        unsetExternalUserId(id, provider)
+        externalUsers[ExternalUserBind(provider, externalId)] = id
+    }
+
+    override suspend fun unsetExternalUserId(id: UserId, provider: ExternalUserProvider) {
         externalUsers.filter { (bind, userId) -> userId == id && bind.provider == provider }
             .keys
             .forEach { externalUsers.remove(it) }
-        externalUsers[ExternalUserBind(provider, externalId)] = id
     }
 }

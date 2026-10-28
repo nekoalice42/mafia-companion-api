@@ -131,6 +131,12 @@ public abstract class BaseAPI(
     ): Response<Unit>
 
     context(currentUserId: UserId)
+    public abstract suspend fun unbindExternalUser(
+        userId: UserId,
+        provider: ExternalUserProvider,
+    ): Response<Unit>
+
+    context(currentUserId: UserId)
     public abstract suspend fun deleteUser(userId: UserId): Response<Unit>
 
     public abstract suspend fun telegramOauthCallbackHtml(

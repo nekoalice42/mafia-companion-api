@@ -30,11 +30,13 @@ internal fun BaseAPI.applyPrivateUserRoutes() {
         withUserIdContext { getExternalUserBinds(res.parent.id) }
     }
 
-    routing.defineRoute<UserResource.ById.External.Provider, ExternalUserInfo, _>(
-        Put,
-        DummyDescriber.Accept,
-    ) { res, info ->
-        withUserIdContext { bindExternalUser(res.parent.parent.id, res.provider, info) }
+    routing.defineGroup<UserResource.ById.External.Provider>(DummyDescriber.Accept) {
+        put<ExternalUserInfo, _> { res, info ->
+            withUserIdContext { bindExternalUser(res.parent.parent.id, res.provider, info) }
+        }
+        delete { res ->
+            withUserIdContext { unbindExternalUser(res.parent.parent.id, res.provider) }
+        }
     }
 
     routing.defineRoute<UserResource.ById.Password, InputPassword, _>(

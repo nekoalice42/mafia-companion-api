@@ -97,4 +97,13 @@ class PostgreSQLUserStorage : UserStorage {
             }
         }
     }
+
+    override suspend fun unsetExternalUserId(id: UserId, provider: ExternalUserProvider) {
+        tx {
+            ExternalUsers.deleteWhere {
+                (ExternalUsers.userId eq id.value) and
+                    (ExternalUsers.provider eq mapDtoProvider(provider))
+            }
+        }
+    }
 }

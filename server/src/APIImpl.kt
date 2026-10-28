@@ -393,6 +393,19 @@ class APIImpl(
     }
 
     context(currentUserId: UserId)
+    override suspend fun unbindExternalUser(
+        userId: UserId,
+        provider: ExternalUserProvider,
+    ): Response<Unit> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        if (storages.user.getByIdOrNull(userId) == null) {
+            return Response.Error("User not found", NotFound)
+        }
+        storages.user.unsetExternalUserId(userId, provider)
+        return Response.Success()
+    }
+
+    context(currentUserId: UserId)
     override suspend fun deleteUser(userId: UserId): Response<Unit> {
         requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
         storages.user.delete(userId)
