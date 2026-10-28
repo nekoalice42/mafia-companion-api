@@ -314,7 +314,7 @@ class APIImpl(
             return Response.Error("User with this username already exists", Conflict)
         }
         val id = storages.user.add(user)
-        return Response.Success(NewResourceId(id))
+        return Response.Success(NewResourceId(id), Created)
     }
 
     context(currentUserId: UserId)
