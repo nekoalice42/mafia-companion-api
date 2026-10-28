@@ -35,6 +35,7 @@ import me.nekoalice.mafia.api.dto.user.external.ExternalUserBind
 import me.nekoalice.mafia.api.dto.user.external.ExternalUserInfo
 import me.nekoalice.mafia.api.dto.user.external.ExternalUserProvider
 import me.nekoalice.mafia.api.dto.user.security.InputPassword
+import me.nekoalice.mafia.api.server.storage.adminUserUuid
 import me.nekoalice.mafia.api.server.storage.base.AuthStorage
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
@@ -344,6 +345,9 @@ class APIImpl(
             && storages.user.getByUsernameOrNull(user.username) != null
         ) {
             return Response.Error("User with this username already exists", Conflict)
+        }
+        if (existingUser.id.value == adminUserUuid && user.role != Admin) {
+            return Response.Error("Admin user role must be 'admin'", BadRequest)
         }
         storages.user.edit(userId, user)
         return Response.Success()
