@@ -12,11 +12,12 @@ import me.nekoalice.mafia.api.contracts.openapi.descriptions.auth.*
 import me.nekoalice.mafia.api.contracts.resources.AuthResource
 import me.nekoalice.mafia.api.contracts.routes.meta.defineGroup
 import me.nekoalice.mafia.api.contracts.routes.meta.defineRoute
+import me.nekoalice.mafia.api.contracts.routes.meta.withUserIdContext
 import me.nekoalice.mafia.api.dto.auth.ExternalAuthCode
 import me.nekoalice.mafia.api.dto.auth.LoginData
 import me.nekoalice.mafia.api.dto.auth.RefreshToken
 import me.nekoalice.mafia.api.dto.auth.TelegramIdToken
-import me.nekoalice.mafia.api.dto.user.UserId
+import me.nekoalice.mafia.api.dto.user.security.InputPassword
 
 context(routing: Route)
 internal fun BaseAPI.applyPublicAuthRoutes() {
@@ -40,12 +41,12 @@ internal fun BaseAPI.applyPublicAuthRoutes() {
 
 context(routing: Route)
 internal fun BaseAPI.applyPrivateAuthRoutes() {
-    routing.defineRoute<AuthResource.Password, LoginData, _>(Put, AuthPasswordDescriber) {
-        changePassword(it)
+    routing.defineRoute<AuthResource.Password, InputPassword, _>(Put, AuthPasswordDescriber) {
+        withUserIdContext { changePassword(it) }
     }
 
     routing.defineRoute<AuthResource.Token, _>(Delete, AuthTokenDescriber) {
-        logoutAll(call.principal<UserId>()!!)
+        withUserIdContext { logoutAll() }
     }
 }
 

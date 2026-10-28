@@ -31,8 +31,13 @@ import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
+import me.nekoalice.mafia.api.dto.user.InputUser
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserBind
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserInfo
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserProvider
+import me.nekoalice.mafia.api.dto.user.security.InputPassword
 
 public abstract class BaseAPI(
     environmentUrls: EnvironmentUrls,
@@ -47,10 +52,18 @@ public abstract class BaseAPI(
     public abstract suspend fun getRoot(): Response<HelloResponse>
     public abstract suspend fun getHealth(): Response<HealthResponse>
     public abstract suspend fun login(loginData: LoginData): Response<TokenPair>
-    public abstract suspend fun getMe(userId: UserId): Response<User>
-    public abstract suspend fun changePassword(loginData: LoginData): Response<Unit>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun getMe(): Response<User>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun changePassword(password: InputPassword): Response<Unit>
+
     public abstract suspend fun refreshLogin(refreshToken: RefreshToken): Response<TokenPair>
-    public abstract suspend fun logoutAll(userId: UserId): Response<Unit>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun logoutAll(): Response<Unit>
+
     public abstract suspend fun getPlayers(): Response<ResponseList<Player>>
     public abstract suspend fun getPlayer(playerId: PlayerId): Response<Player>
     public abstract suspend fun createPlayer(player: InputPlayer): Response<NewResourceId>
@@ -86,6 +99,39 @@ public abstract class BaseAPI(
         tournamentId: TournamentId,
         isAuthenticated: Boolean,
     ): Response<ResponseList<ScoreboardRow>>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun createUser(user: InputUser): Response<NewResourceId>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun listUsers(): Response<ResponseList<User>>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun getUser(userId: UserId): Response<User>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun updateUser(userId: UserId, user: InputUser): Response<Unit>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun updateUserPassword(
+        userId: UserId,
+        password: InputPassword,
+    ): Response<Unit>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun getExternalUserBinds(
+        userId: UserId,
+    ): Response<ResponseList<ExternalUserBind>>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun bindExternalUser(
+        userId: UserId,
+        provider: ExternalUserProvider,
+        externalUserInfo: ExternalUserInfo,
+    ): Response<Unit>
+
+    context(currentUserId: UserId)
+    public abstract suspend fun deleteUser(userId: UserId): Response<Unit>
 
     public abstract suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,

@@ -28,13 +28,18 @@ import me.nekoalice.mafia.api.dto.tournament.InputTournament
 import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.tournament.scoreboard.ScoreboardRow
+import me.nekoalice.mafia.api.dto.user.InputUser
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserBind
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserInfo
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserProvider
+import me.nekoalice.mafia.api.dto.user.security.InputPassword
 import me.nekoalice.mafia.api.server.storage.base.AuthStorage
 import me.nekoalice.mafia.api.server.storage.base.CRUDStorage
 import me.nekoalice.mafia.api.server.storage.base.StorageProvider
-import me.nekoalice.mafia.api.server.storage.base.UserStorage
 import me.nekoalice.mafia.api.server.utils.*
+import me.nekoalice.mafia.api.server.validation.runValidation
 import me.nekoalice.mafia.api.server.validation.validate
 import me.nekoalice.mafia.api.server.validation.validateEdited
 import me.nekoalice.mafia.api.server.validation.validateNew
@@ -97,6 +102,15 @@ class APIImpl(
     private fun isRedirectUrlValid(redirectUrl: String): Boolean =
         appRedirectRegex.matches(redirectUrl)
 
+    context(currentUserId: UserId)
+    private suspend fun requireAdminRights(): Result<Unit> {
+        val currentUser = storages.user.getByIdOrNull(currentUserId)
+        return runValidation {
+            require(currentUser?.role == Admin) { "You're not admin!" }
+        }
+    }
+
+
     override suspend fun getRoot(): Response<HelloResponse> =
         Response.Success(HelloResponse())
 
@@ -132,16 +146,14 @@ class APIImpl(
         return Response.Success(createTokenPair(user.id))
     }
 
-    override suspend fun getMe(userId: UserId): Response<User> =
-        Response.Success(storages.user.getByIdOrNull(userId)!!)
+    context(currentUserId: UserId)
+    override suspend fun getMe(): Response<User> =
+        Response.Success(storages.user.getByIdOrNull(currentUserId)!!)
 
-    override suspend fun changePassword(loginData: LoginData): Response<Unit> {
-        loginData.validate().onFailure { return Response.Error(it, BadRequest) }
-        val user = storages.user.getByUsernameOrNull(loginData.username) ?: return Response.Error(
-            "User not found",
-            HttpStatusCode.BadRequest,
-        )
-        storages.auth.setPassword(user.id, loginData.password)
+    context(currentUserId: UserId)
+    override suspend fun changePassword(password: InputPassword): Response<Unit> {
+        password.validate().onFailure { return Response.Error(it, BadRequest) }
+        storages.auth.setPassword(currentUserId, password.password)
         return Response.Success()
     }
 
@@ -155,8 +167,9 @@ class APIImpl(
         return Response.Success(createTokenPair(userId))
     }
 
-    override suspend fun logoutAll(userId: UserId): Response<Unit> {
-        storages.auth.revokeTokens(userId)
+    context(currentUserId: UserId)
+    override suspend fun logoutAll(): Response<Unit> {
+        storages.auth.revokeTokens(currentUserId)
         return Response.Success()
     }
 
@@ -293,6 +306,95 @@ class APIImpl(
         return Response.Success(ResponseList(scoreboardSortedWithPlaces))
     }
 
+    context(currentUserId: UserId)
+    override suspend fun createUser(user: InputUser): Response<NewResourceId> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        user.validate().onFailure { return Response.Error(it, BadRequest) }
+        if (storages.user.getByUsernameOrNull(user.username) != null) {
+            return Response.Error("User with this username already exists", Conflict)
+        }
+        val id = storages.user.add(user)
+        return Response.Success(NewResourceId(id))
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun listUsers(): Response<ResponseList<User>> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        return Response.Success(ResponseList(storages.user.getAll()))
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun getUser(userId: UserId): Response<User> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        val user = storages.user.getByIdOrNull(userId) ?: return Response.Error(
+            "User not found",
+            NotFound,
+        )
+        return Response.Success(user)
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun updateUser(userId: UserId, user: InputUser): Response<Unit> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        val existingUser = storages.user.getByIdOrNull(userId)
+            ?: return Response.Error("User not found", NotFound)
+        user.validate().onFailure { return Response.Error(it, BadRequest) }
+        if (
+            user.username != existingUser.username
+            && storages.user.getByUsernameOrNull(user.username) != null
+        ) {
+            return Response.Error("User with this username already exists", Conflict)
+        }
+        storages.user.edit(userId, user)
+        return Response.Success()
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun updateUserPassword(
+        userId: UserId,
+        password: InputPassword,
+    ): Response<Unit> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        if (storages.user.getByIdOrNull(userId) == null) {
+            return Response.Error("User not found", NotFound)
+        }
+        password.validate().onFailure { return Response.Error(it, BadRequest) }
+        storages.auth.setPassword(userId, password.password)
+        return Response.Success()
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun getExternalUserBinds(
+        userId: UserId,
+    ): Response<ResponseList<ExternalUserBind>> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        if (storages.user.getByIdOrNull(userId) == null) {
+            return Response.Error("User not found", NotFound)
+        }
+        return Response.Success(ResponseList(storages.user.getAllExternalIds(userId)))
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun bindExternalUser(
+        userId: UserId,
+        provider: ExternalUserProvider,
+        externalUserInfo: ExternalUserInfo,
+    ): Response<Unit> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        if (storages.user.getByIdOrNull(userId) == null) {
+            return Response.Error("User not found", NotFound)
+        }
+        storages.user.bindExternalUser(userId, externalUserInfo.externalId, provider)
+        return Response.Success()
+    }
+
+    context(currentUserId: UserId)
+    override suspend fun deleteUser(userId: UserId): Response<Unit> {
+        requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        storages.user.delete(userId)
+        return Response.Success()
+    }
+
     override suspend fun telegramOauthCallbackHtml(
         token: TelegramIdToken,
         oauthState: String,
@@ -309,10 +411,10 @@ class APIImpl(
         }
         val user = storages.user.getByExternalIdOrNull(
             identity.id.toString(),
-            UserStorage.ExternalUserProvider.Telegram,
+            ExternalUserProvider.Telegram,
         ) ?: return Response.Error(
             "No such Telegram user registered (id=${identity.id})",
-            HttpStatusCode.Forbidden,
+            Forbidden,
         )
         val code = generateToken(4)
         storages.auth.setUserForAuthCode(

@@ -13,13 +13,14 @@ import me.nekoalice.mafia.api.dto.tournament.Tournament
 import me.nekoalice.mafia.api.dto.tournament.TournamentId
 import me.nekoalice.mafia.api.dto.user.User
 import me.nekoalice.mafia.api.dto.user.UserId
-import me.nekoalice.mafia.api.server.storage.base.UserStorage
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserBind
+import me.nekoalice.mafia.api.dto.user.external.ExternalUserProvider
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.r2dbc.R2dbcTransaction
 import org.jetbrains.exposed.v1.r2dbc.transactions.suspendTransaction
 import me.nekoalice.mafia.api.dao.Role as DaoRole
-import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
 import me.nekoalice.mafia.api.dao.UserRole as DaoUserRole
+import me.nekoalice.mafia.api.dto.game.enums.Role as DtoRole
 import me.nekoalice.mafia.api.dto.user.UserRole as DtoUserRole
 
 @IgnorableReturnValue
@@ -46,7 +47,13 @@ internal fun mapDtoRole(role: DtoRole): DaoRole = when (role) {
     Citizen -> CITIZEN
 }
 
-internal fun mapProvider(provider: UserStorage.ExternalUserProvider): ExternalProvider =
+internal fun mapDtoUserRole(role: DtoUserRole): DaoUserRole =
+    when (role) {
+        Admin -> ADMIN
+        Judge -> JUDGE
+    }
+
+internal fun mapDtoProvider(provider: ExternalUserProvider): ExternalProvider =
     when (provider) {
         Telegram -> TELEGRAM
     }
@@ -67,6 +74,11 @@ internal fun mapDaoUserRole(role: DaoUserRole): DtoUserRole = when (role) {
     ADMIN -> Admin
     JUDGE -> Judge
 }
+
+internal fun mapDaoProvider(provider: ExternalProvider): ExternalUserProvider =
+    when (provider) {
+        TELEGRAM -> Telegram
+    }
 
 internal fun gameFromDao(row: ResultRow, players: List<InGamePlayer>) = Game(
     id = GameId(row[Games.id].value),
@@ -114,4 +126,10 @@ internal fun userFromDao(row: ResultRow): User =
         id = UserId(row[Users.id].value),
         username = row[Users.username],
         role = mapDaoUserRole(row[Users.role]),
+    )
+
+internal fun externalUserBindFromDao(row: ResultRow): ExternalUserBind =
+    ExternalUserBind(
+        provider = mapDaoProvider(row[ExternalUsers.provider].value),
+        externalId = row[ExternalUsers.externalId].value,
     )
