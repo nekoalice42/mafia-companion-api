@@ -11,5 +11,5 @@ interface UserStorage : CRUDStorage<User, InputUser, UserId> {
     suspend fun getByUsernameOrNull(username: String): User?
     suspend fun getByExternalIdOrNull(externalId: String, provider: ExternalUserProvider): User?
     suspend fun getAllExternalIds(id: UserId): List<ExternalUserBind>
-    suspend fun bindExternalUser(id: UserId, externalId: String, provider: ExternalUserProvider)
+    suspend fun setExternalUserId(id: UserId, provider: ExternalUserProvider, externalId: String)
 }

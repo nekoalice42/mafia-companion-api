@@ -384,7 +384,11 @@ class APIImpl(
         if (storages.user.getByIdOrNull(userId) == null) {
             return Response.Error("User not found", NotFound)
         }
-        storages.user.bindExternalUser(userId, externalUserInfo.externalId, provider)
+        val boundUser = storages.user.getByExternalIdOrNull(externalUserInfo.externalId, provider)
+        if (boundUser != null && boundUser.id != userId) {
+            return Response.Error("This external user already bound", Conflict)
+        }
+        storages.user.setExternalUserId(userId, provider, externalUserInfo.externalId)
         return Response.Success()
     }
 

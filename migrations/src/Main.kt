@@ -20,6 +20,7 @@ val migrations = listOf(
     V09TournamentPlayers,
     V10AddScoreboardFreeze,
     V11AddUserRole,
+    V12AddExternalUsersUniqueIndex,
 )
 
 val logger: Logger = LoggerFactory.getLogger("Migrations")

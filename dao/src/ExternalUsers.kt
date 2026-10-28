@@ -13,4 +13,8 @@ public object ExternalUsers : CompositeIdTable("external_users") {
     public val userId: Column<EntityID<Uuid>> = reference("user_id", Users)
 
     override val primaryKey: PrimaryKey = PrimaryKey(externalId, provider)
+
+    init {
+        uniqueIndex(userId, provider)
+    }
 }

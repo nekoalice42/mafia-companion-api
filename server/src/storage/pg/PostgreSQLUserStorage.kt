@@ -84,13 +84,13 @@ class PostgreSQLUserStorage : UserStorage {
             .toList()
     }
 
-    override suspend fun bindExternalUser(
+    override suspend fun setExternalUserId(
         id: UserId,
-        externalId: String,
         provider: ExternalUserProvider,
+        externalId: String,
     ) {
         tx {
-            ExternalUsers.upsert {
+            ExternalUsers.upsert(ExternalUsers.userId, ExternalUsers.provider) {
                 it[userId] = id.value
                 it[this.externalId] = externalId
                 it[this.provider] = mapDtoProvider(provider)
