@@ -35,61 +35,58 @@ internal suspend fun <T> readonlyTx(block: suspend R2dbcTransaction.() -> T) = s
     statement = block,
 )
 
-internal fun mapDtoTeam(team: Team): WinnerTeam = when (team) {
+internal fun Team.toDao(): WinnerTeam = when (this) {
     Mafia -> MAFIA
     Citizen -> CITIZEN
 }
 
-internal fun mapDtoRole(role: DtoRole): DaoRole = when (role) {
+internal fun DtoRole.toDao(): DaoRole = when (this) {
     Mafia -> MAFIA
     Don -> DON
     Sheriff -> SHERIFF
     Citizen -> CITIZEN
 }
 
-internal fun mapDtoUserRole(role: DtoUserRole): DaoUserRole =
-    when (role) {
-        Admin -> ADMIN
-        Judge -> JUDGE
-    }
+internal fun DtoUserRole.toDao(): DaoUserRole = when (this) {
+    Admin -> ADMIN
+    Judge -> JUDGE
+}
 
-internal fun mapDtoProvider(provider: ExternalUserProvider): ExternalProvider =
-    when (provider) {
-        Telegram -> TELEGRAM
-    }
+internal fun ExternalUserProvider.toDao(): ExternalProvider = when (this) {
+    Telegram -> TELEGRAM
+}
 
-internal fun mapDaoWinnerTeam(team: WinnerTeam): Team = when (team) {
+internal fun WinnerTeam.toDto(): Team = when (this) {
     MAFIA -> Mafia
     CITIZEN -> Citizen
 }
 
-internal fun mapDaoRole(role: DaoRole): DtoRole = when (role) {
+internal fun DaoRole.toDto(): DtoRole = when (this) {
     MAFIA -> Mafia
     DON -> Don
     SHERIFF -> Sheriff
     CITIZEN -> Citizen
 }
 
-internal fun mapDaoUserRole(role: DaoUserRole): DtoUserRole = when (role) {
+internal fun DaoUserRole.toDto(): DtoUserRole = when (this) {
     ADMIN -> Admin
     JUDGE -> Judge
 }
 
-internal fun mapDaoProvider(provider: ExternalProvider): ExternalUserProvider =
-    when (provider) {
-        TELEGRAM -> Telegram
-    }
+internal fun ExternalProvider.toDto(): ExternalUserProvider = when (this) {
+    TELEGRAM -> Telegram
+}
 
 internal fun gameFromDao(row: ResultRow, players: List<InGamePlayer>) = Game(
     id = GameId(row[Games.id].value),
     players = players,
-    winnerTeam = row[Games.winnerTeam]?.let(::mapDaoWinnerTeam),
+    winnerTeam = row[Games.winnerTeam]?.toDto(),
     startTime = row[Games.startedAt],
 )
 
 internal fun inGamePlayerFromDao(row: ResultRow) = InGamePlayer(
     playerId = PlayerId(row[InGamePlayers.playerId].value),
-    role = mapDaoRole(row[InGamePlayers.role]),
+    role = row[InGamePlayers.role].toDto(),
     extraPoints = if (row[InGamePlayers.extraPoints] != null)
         ExtraPointsDescribed(
             pointsX100 = row[InGamePlayers.extraPoints]!!,
@@ -125,11 +122,11 @@ internal fun userFromDao(row: ResultRow): User =
     User(
         id = UserId(row[Users.id].value),
         username = row[Users.username],
-        role = mapDaoUserRole(row[Users.role]),
+        role = row[Users.role].toDto(),
     )
 
 internal fun externalUserBindFromDao(row: ResultRow): ExternalUserBind =
     ExternalUserBind(
-        provider = mapDaoProvider(row[ExternalUsers.provider].value),
+        provider = row[ExternalUsers.provider].value.toDto(),
         externalId = row[ExternalUsers.externalId].value,
     )

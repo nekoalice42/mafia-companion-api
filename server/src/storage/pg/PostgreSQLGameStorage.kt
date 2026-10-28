@@ -26,14 +26,14 @@ class PostgreSQLGameStorage : GameStorage {
             Games.insert {
                 it[this.id] = id.value
                 it[this.tournamentId] = tournamentId.value
-                it[winnerTeam] = game.winnerTeam?.let(::mapDtoTeam)
+                it[winnerTeam] = game.winnerTeam?.toDao()
                 it[startedAt] = game.startTime
             }
             InGamePlayers.batchInsert(game.players.withIndex()) { (index, player) ->
                 this[InGamePlayers.gameId] = id.value
                 this[InGamePlayers.playerId] = player.playerId.value
                 this[InGamePlayers.seat] = index + 1
-                this[InGamePlayers.role] = mapDtoRole(player.role)
+                this[InGamePlayers.role] = player.role.toDao()
                 this[InGamePlayers.extraPoints] = player.extraPoints?.pointsX100
                 this[InGamePlayers.extraPointsDescription] = player.extraPoints?.description
                 this[InGamePlayers.guessedMafiaCount] = player.guessedMafiaCount

@@ -23,7 +23,7 @@ class PostgreSQLUserStorage : UserStorage {
                 it[this.id] = id.value
                 it[username] = item.username
                 it[passwordHash] = null
-                it[role] = mapDtoUserRole(item.role)
+                it[role] = item.role.toDao()
             }
         }
         return id
@@ -41,7 +41,7 @@ class PostgreSQLUserStorage : UserStorage {
         tx {
             Users.update(where = { Users.id eq id.value }) {
                 it[username] = item.username
-                it[role] = mapDtoUserRole(item.role)
+                it[role] = item.role.toDao()
             }
         }
     }
@@ -72,7 +72,7 @@ class PostgreSQLUserStorage : UserStorage {
             .select(Users.columns)
             .where {
                 (ExternalUsers.externalId eq externalId) and
-                        (ExternalUsers.provider eq mapDtoProvider(provider))
+                        (ExternalUsers.provider eq provider.toDao())
             }.singleOrNull()
             ?.let(::userFromDao)
     }
@@ -93,7 +93,7 @@ class PostgreSQLUserStorage : UserStorage {
             ExternalUsers.upsert(ExternalUsers.userId, ExternalUsers.provider) {
                 it[userId] = id.value
                 it[this.externalId] = externalId
-                it[this.provider] = mapDtoProvider(provider)
+                it[this.provider] = provider.toDao()
             }
         }
     }
@@ -102,7 +102,7 @@ class PostgreSQLUserStorage : UserStorage {
         tx {
             ExternalUsers.deleteWhere {
                 (ExternalUsers.userId eq id.value) and
-                    (ExternalUsers.provider eq mapDtoProvider(provider))
+                    (ExternalUsers.provider eq provider.toDao())
             }
         }
     }
