@@ -104,12 +104,9 @@ class APIImpl(
         appRedirectRegex.matches(redirectUrl)
 
     context(currentUserId: UserId)
-    private suspend fun requireAdminRights(): Result<Unit> {
-        val currentUser = storages.user.getByIdOrNull(currentUserId)
-        return runValidation {
-            require(currentUser?.role == Admin) { "You're not admin!" }
-        }
-    }
+    private suspend fun requireAdminRights(): Result<Unit> =
+        storages.user.getByIdOrNull(currentUserId)
+            .runValidation { require(this?.role == Admin) { "You're not admin!" } }
 
 
     override suspend fun getRoot(): Response<HelloResponse> =
