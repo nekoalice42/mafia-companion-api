@@ -412,6 +412,9 @@ class APIImpl(
     context(currentUserId: UserId)
     override suspend fun deleteUser(userId: UserId): Response<Unit> {
         requireAdminRights().onFailure { return Response.Error(it, Forbidden) }
+        if (userId.value == adminUserUuid) {
+            return Response.Error("Admin user cannot be deleted", BadRequest)
+        }
         storages.user.delete(userId)
         return Response.Success()
     }
