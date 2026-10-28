@@ -3,7 +3,10 @@ package me.nekoalice.mafia.api.server.storage.pg
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
+import me.nekoalice.mafia.api.dao.AccessTokens
+import me.nekoalice.mafia.api.dao.AuthCodes
 import me.nekoalice.mafia.api.dao.ExternalUsers
+import me.nekoalice.mafia.api.dao.RefreshTokens
 import me.nekoalice.mafia.api.dao.Users
 import me.nekoalice.mafia.api.dto.user.InputUser
 import me.nekoalice.mafia.api.dto.user.User
@@ -52,6 +55,10 @@ class PostgreSQLUserStorage : UserStorage {
 
     override suspend fun delete(id: UserId) {
         tx {
+            AccessTokens.deleteWhere { AccessTokens.userId eq id.value }
+            AuthCodes.deleteWhere { AuthCodes.userId eq id.value }
+            ExternalUsers.deleteWhere { ExternalUsers.userId eq id.value }
+            RefreshTokens.deleteWhere { RefreshTokens.userId eq id.value }
             Users.deleteWhere { Users.id eq id.value }
         }
     }
